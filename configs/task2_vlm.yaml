@@ -22,6 +22,19 @@ data:
   presence_pool_size: 20000                # reusable training pools (pairs)
   counting_pool_size: 20000
   feature_cache: outputs/task2/features_siglip_fp16
+  grounding_pool_images: 8000              # train2014 images the pools draw from (bounds feature cache)
+  min_area_frac: 0.005                     # instances smaller than this share of the image make a
+                                           # category ambiguous for that image (excluded); see README
+  ids:
+    partition: ids/task2_val_partition.json
+    captions: ids/task2_captions.json
+    grounding: ids/task2_grounding.json
+    vqa: ids/task2_vqa.json
+    mismatch: ids/task2_mismatch_map.json
+
+prompts:
+  caption: "Write a short caption for this image."
+  answer_suffix: "Answer the question using a single word or number."
 
 model:
   vis_dim: 768
