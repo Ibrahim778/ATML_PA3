@@ -15,7 +15,6 @@ import time
 
 import numpy as np
 import torch
-from PIL import Image
 from tqdm import tqdm
 
 from common.io import load_json, load_yaml, repo_path, results_dir, save_json
@@ -82,6 +81,7 @@ def main():
     prog_path = out / "progress.json"
     done = json.load(open(prog_path))["done"] if prog_path.exists() else 0
 
+    from PIL import Image
     from transformers import SiglipImageProcessor, SiglipVisionModel
     proc = SiglipImageProcessor.from_pretrained(cfg["vision_id"])
     enc = SiglipVisionModel.from_pretrained(cfg["vision_id"], torch_dtype=torch.float32).to(device).eval()

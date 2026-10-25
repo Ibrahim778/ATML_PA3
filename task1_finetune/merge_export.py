@@ -77,7 +77,7 @@ def main():
             base = plain_model(cfg)
             bmods = dict(base.named_modules())
             for name in sorted({k.rsplit(".", 1)[0] for k in sd}):
-                W0 = bmods[name].weight.float()
+                W0 = bmods[name].weight.half().float()  # training computed bases from the FP16 backbone
                 U, S, Vh = torch.linalg.svd(W0, full_matrices=False)
                 k = acfg["k"]
                 errs.append(max((U[:, :k].T @ sd[f"{name}.proj_B"]).norm().item(),

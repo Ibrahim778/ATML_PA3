@@ -103,3 +103,9 @@ def results_dir(cfg) -> Path:
 
 def outputs_dir(cfg) -> Path:
     return ensure_dir(Path(cfg["paths"]["outputs_dir"]) / cfg["task"])
+
+
+def truncate_jsonl(path, key: str, max_value):
+    """Drop rows with row[key] > max_value (used when resuming from an earlier checkpoint)."""
+    rows = [r for r in read_jsonl(path) if r[key] <= max_value]
+    write_jsonl(rows, path)

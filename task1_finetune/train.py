@@ -18,7 +18,7 @@ from tqdm import tqdm
 
 from common import lora as L
 from common.chat import build_sft_example, pad_batch
-from common.io import append_jsonl, config_hash, load_json, load_yaml, outputs_dir, results_dir, save_json
+from common.io import append_jsonl, truncate_jsonl, config_hash, load_json, load_yaml, outputs_dir, results_dir, save_json
 from common.resources import Timer, peak_memory_gb, reset_peak_memory, tensor_bytes
 from common.seeding import get_device, set_seed
 from common.training import (AmpStepper, dir_size_bytes, latest_checkpoint, load_resume, make_scheduler,
@@ -168,6 +168,7 @@ def main():
         assert state["data_pos"] == start * eff
         timer.elapsed_before = state["extra"].get("elapsed", 0.0)
         summary.update(state["extra"].get("summary", {}))
+        truncate_jsonl(log_path, "update", start)
         print(f"[{args.method}] resumed from {ck} at update {start}")
         del state
     elif log_path.exists():

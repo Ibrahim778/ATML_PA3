@@ -17,7 +17,7 @@ from safetensors.torch import load_file, save_file
 from tqdm import tqdm
 
 from common import lora as L
-from common.io import append_jsonl, load_yaml, outputs_dir, read_jsonl, results_dir, save_json
+from common.io import append_jsonl, truncate_jsonl, load_yaml, outputs_dir, read_jsonl, results_dir, save_json
 from common.resources import Timer, peak_memory_gb, reset_peak_memory
 from common.seeding import get_device, set_seed
 from common.training import (AmpStepper, cosine_lambda, example_weighted_loss, latest_checkpoint,
@@ -139,6 +139,8 @@ def main():
         summary["checks"]["feature_shape"] = list(store.arr.shape[1:])
         summary["checks"]["split_isolation"] = True
     else:
+        truncate_jsonl(log_path, "update", state["update"])
+        truncate_jsonl(dev_path, "update", state["update"])
         vlm.connector.load_state_dict({k: v.to(device) for k, v in state["model"]["connector"].items()})
         if state["model"].get("adapter"):
             L.load_adapter_factors(vlm.lm, state["model"]["adapter"])
@@ -190,13 +192,15 @@ def main():
         summary["stages"].setdefault(st["name"], {})["trainable_params"] = n_train
         start_u = 0
         if state and si == start_stage:
-            opt.load_state_dict(state["optimizer"])
-            sched.load_state_dict(state["scheduler"])
-            stepper.load_state_dict(state["stepper"])
-            restore_rng(state)
             start_u = state["extra"]["stage_update"]
+            if start_u > 0:  # mid-stage; at a stage boundary the new stage starts a fresh optimiser
+                opt.load_state_dict(state["optimizer"])
+                sched.load_state_dict(state["scheduler"])
+                stepper.load_state_dict(state["stepper"])
+            restore_rng(state)
             state = None
         if start_u == 0:
+            set_seed(cfg["seed"] + 100 + si)   # same RNG stream at every stage start, resumed or not
             reset_peak_memory(device)
             summary["stages"][st["name"]]["start_elapsed"] = timer.elapsed()
         maybe_dev(g0 + start_u)
@@ -233,6 +237,11 @@ def main():
             pbar.set_postfix(loss=f"{loss_tot:.3f}", skip=stepper.n_skipped)
             maybe_dev(g)
             if u + 1 == st["updates"]:
+                sd = summary["stages"][st["name"]]
+                sd["time_s"] = timer.elapsed() - sd.get("start_elapsed", 0.0)
+                sd["peak_mem_gb"] = max(sd.get("peak_mem_gb", 0.0), peak_memory_gb(device))
+                sd["skipped_updates"] = stepper.n_skipped
+                sd["mixture_counts_cumulative"] = dict(sampler.counts)
                 save_stage_weights(vlm, rdir / st["name"])
             if g % tc["checkpoint_every"] == 0:
                 cd = rdir / f"ckpt_{g}"
@@ -248,11 +257,6 @@ def main():
             if budget is not None:
                 budget -= 1
         else:
-            sd = summary["stages"][st["name"]]
-            sd["time_s"] = timer.elapsed() - sd.get("start_elapsed", 0.0)
-            sd["peak_mem_gb"] = max(sd.get("peak_mem_gb", 0.0), peak_memory_gb(device))
-            sd["skipped_updates"] = stepper.n_skipped
-            sd["mixture_counts_cumulative"] = dict(sampler.counts)
             g0 += st["updates"]
             continue
         break   # --max-updates reached
