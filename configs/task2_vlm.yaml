@@ -1,0 +1,76 @@
+base_config: configs/base.yaml
+task: task2
+model_id: Qwen/Qwen3-0.6B
+vision_id: google/siglip-base-patch16-224
+run_name: vlm196
+pool_2x2: false          # optional 49-token variant: set true and run_name: vlm49
+
+data:
+  coco_dir: data/coco                      # expects train2014/, val2014/, annotations/
+  vqa_dir: data/vqav2                      # expects v2_*_questions/annotations/complementary_pairs json
+  caption_train_images: 6000
+  captions_per_train_image: 3
+  caption_dev_images: 96
+  grounding_dev_pairs: 24                  # presence + counting combined
+  grounding_test_pairs: 64
+  presence_fraction_eval: 0.5              # share of eval grounding pairs that are presence
+  count_range: [1, 4]
+  vqa_train_pairs: {yes/no: 640, number: 256, other: 640}
+  vqa_dev_pairs: {yes/no: 12, number: 8, other: 12}
+  vqa_test_pairs: {yes/no: 36, number: 24, other: 36}
+  min_agreement: 8
+  presence_pool_size: 20000                # reusable training pools (pairs)
+  counting_pool_size: 20000
+  feature_cache: outputs/task2/features_siglip_fp16
+
+model:
+  vis_dim: 768
+  hidden: 1024
+  n_patches: 196
+  lora: {r: 16, alpha: 32, dropout: 0.05, targets: [q_proj, k_proj, v_proj, o_proj]}
+  # Connector output scale calibration (training data only): visual tokens are multiplied by
+  # a fixed scalar s so that their mean L2 norm matches the mean L2 norm of Qwen text-token
+  # embeddings measured on training captions/questions. s is computed once at init.
+  calibrate_scale: true
+  calibration_images: 256
+
+caps:
+  question: 80
+  caption: 64
+  answer: 16
+
+train:
+  micro_batch: 8
+  grad_accum: 2
+  weight_decay: 0.01
+  clip_norm: 1.0
+  warmup_frac: 0.05
+  min_lr_ratio: 0.1
+  gradient_checkpointing: true
+  checkpoint_every: 250
+  stages:
+    - name: stage1_caption
+      updates: 2250
+      connector_lr: 1.0e-3
+      lora_lr: null
+      mixture: {caption: 1.0}
+    - name: stage2_instruct
+      updates: 1500
+      connector_lr: 1.0e-4
+      lora_lr: 2.0e-5
+      mixture: {presence: 0.5, counting: 0.25, caption: 0.25}
+    - name: stage3_vqa
+      updates: 750
+      connector_lr: 5.0e-5
+      lora_lr: 1.0e-5
+      mixture: {vqa: 0.7, presence: 0.1, counting: 0.1, caption: 0.1}
+
+dev_eval:
+  every: 500
+  extra_at: [0, 2250, 3750, 4500]
+  batch_size: 16
+
+final_eval:
+  max_new_tokens: 16
+  batch_size: 8
+  bootstrap: 4000

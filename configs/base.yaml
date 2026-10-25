@@ -1,0 +1,13 @@
+# Shared settings. Task configs inherit from this file via `base_config`.
+seed: 6304
+device: auto            # auto -> cuda, then mps, then cpu
+paths:
+  data_dir: data
+  outputs_dir: outputs
+  ids_dir: ids
+  results_dir: results
+  report_dir: report
+models:
+  qwen3: Qwen/Qwen3-0.6B
+  siglip: google/siglip-base-patch16-224
+  qwen25_math: Qwen/Qwen2.5-3B-Instruct

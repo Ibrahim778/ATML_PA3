@@ -1,0 +1,24 @@
+# raw data, caches, checkpoints (never commit)
+data/
+outputs/
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.npy
+*.npz
+lm_eval_cache/
+wandb/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ipynb_checkpoints/
+.DS_Store
+
+# keep committed: ids/, results/, report/
+!ids/
+!results/
+!report/

@@ -1,0 +1,71 @@
+base_config: configs/base.yaml
+task: task3
+
+data:
+  root: data/ATML-PA3-Data
+  # Sub-folders per model/dataset; edit after reading ATML-PA3-Data/README.MD.
+  datasets:
+    math:
+      folder: qwen2.5-3b-instruct_math
+      kind: math
+      has_attention: false
+    mathvista:
+      folder: qwen2.5-vl-3b-instruct_mathvista
+      kind: mathvista
+      has_attention: true
+  join_keys: [dataset, sample_id, rollout_id]
+  # Column names in the parquet files (edit if README.MD uses different names).
+  columns:
+    text: text
+    token_ids: token_ids
+    num_tokens: num_tokens
+    extracted: extracted_answer
+    gold: gold_answer
+    logp: logp
+    kl: kl_u_p
+    attn_image: attn_image
+    attn_prompt: attn_prompt
+    attn_generated: attn_generated
+    # MathVista metadata (in generations.parquet or a metadata file)
+    question_type: question_type
+    answer_type: answer_type
+    precision: precision
+    choices: choices
+    question: question
+  mathvista_metadata: null     # optional path to json/parquet with per-sample_id metadata
+
+splits:
+  n_dev: 200
+  ids_file: ids/task3_splits.json
+  n_live: 50
+
+offline:
+  budgets: [1, 2, 4, 8, 16, 32]
+  n_orders: 10
+  bootstrap: 1000
+  cache_dir: outputs/task3/cache
+
+live:
+  model_id: Qwen/Qwen2.5-3B-Instruct
+  revision: main               # replace with the exact revision hash listed in ATML-PA3-Data/README.MD
+  dtype: float16
+  temperature: 0.7
+  top_p: 0.8
+  top_k: 20
+  repetition_penalty: 1.0
+  system: "You are a helpful assistant."
+  suffix: "Think step by step inside <think> </think> tags, then give your final answer inside \\boxed{}."
+  revision_prompt: "Review the solution above. Identify and correct any errors; if it is correct, retain its answer. Give your final answer inside \\boxed{}."
+  single_cap: 3072
+  parallel_n: 3
+  parallel_cap: 1024
+  refine_cap: 2048
+  # how the problem and suffix are joined in the user turn
+  join: "\n\n"
+
+adaptive:
+  checkpoints: [4, 8, 16]
+  max_n: 32
+  taus: [0.5, 0.625, 0.75, 0.875, 1.0]
+  gammas: [0.0, 0.1, 0.25, 0.5]
+  tolerance_pp: 1.0
