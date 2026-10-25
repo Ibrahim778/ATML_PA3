@@ -1,0 +1,4 @@
+# Optional 49-token variant: fresh connector and adapters, same seed/data/budgets/evaluation.
+base_config: configs/task2_vlm.yaml
+run_name: vlm49
+pool_2x2: true
