@@ -67,7 +67,7 @@ def run_gsm8k(lm, cfg, tok):
         d["response"] = resp
         filt = s.get("filter", "none")
         d[f"extracted_{filt}"] = _first(s["filtered_resps"])
-        d[f"exact_match_{filt}"] = float(s.get("exact_match", s.get("metrics", {}).get("exact_match", 0.0)))
+        d[f"exact_match_{filt}"] = float(s.get("exact_match", 0.0))   # metric value is a top-level key
     rows = sorted(by_doc.values(), key=lambda x: x["doc_id"])
     cap = g["max_gen_toks"]
     for d in rows:
