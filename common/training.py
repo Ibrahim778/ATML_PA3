@@ -92,13 +92,25 @@ class AmpStepper:
 
 
 # ----------------------------------------------------------------------------- losses
-def supervised_token_nll(hidden: torch.Tensor, labels: torch.Tensor, lm_head) -> tuple:
+def supervised_index(labels: torch.Tensor):
+    """(example, position) indices of supervised next-token predictions, computed on the CPU
+    labels so the training step needs no device->host sync (boolean masking would force one)."""
+    b, t = torch.nonzero(labels[:, 1:] != IGNORE, as_tuple=True)
+    return b, t
+
+
+def supervised_token_nll(hidden: torch.Tensor, labels: torch.Tensor, lm_head, index=None) -> tuple:
     """Per-token NLL (FP32) at supervised positions only.
 
     hidden: (B, T, H) final hidden states; labels: (B, T) with IGNORE on unsupervised positions.
     Position t predicts labels[t+1]. Only supervised rows go through the LM head, which avoids
     materialising (B, T, vocab) logits. Returns (nll[M], example_index[M]).
+    `index` = supervised_index(labels) precomputed on CPU (moved to the device) avoids a sync.
     """
+    if index is not None:
+        b, t = index
+        logits = lm_head(hidden[b, t]).float()
+        return F.cross_entropy(logits, labels[b, t + 1], reduction="none"), b
     h = hidden[:, :-1, :]
     y = labels[:, 1:]
     sel = y != IGNORE

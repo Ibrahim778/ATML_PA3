@@ -23,7 +23,7 @@ from common.resources import Timer, peak_memory_gb, reset_peak_memory, tensor_by
 from common.seeding import get_device, set_seed
 from common.training import (AmpStepper, dir_size_bytes, latest_checkpoint, load_resume, make_scheduler,
                              param_groups, prune_resume_states, restore_rng, save_resume,
-                             supervised_token_nll, token_level_loss)
+                             supervised_index, supervised_token_nll, token_level_loss)
 
 
 def tokenized_dataset(cfg, tok):
@@ -187,15 +187,18 @@ def main():
     for u in pbar:
         batch_ex = data[u * eff:(u + 1) * eff]
         n_tok = sum(e["n_target"] for e in batch_ex)
-        sft_sum = 0.0
+        sft_t = torch.zeros((), device=device)
         for m in range(tc["grad_accum"]):
+            # no device->host syncs inside the accumulation loop, so the CPU can queue kernels
+            # ahead of the GPU (the adapter path launches many small kernels)
             mb = pad_batch(batch_ex[m * tc["micro_batch"]:(m + 1) * tc["micro_batch"]], pad_id)
-            mb = {k: v.to(device) for k, v in mb.items()}
+            idx = tuple(i.to(device, non_blocking=True) for i in supervised_index(mb["labels"]))
+            mb = {k: v.to(device, non_blocking=True) for k, v in mb.items()}
             with stepper.autocast():
                 h = model.model(input_ids=mb["input_ids"], attention_mask=mb["attention_mask"]).last_hidden_state
-                nll, _ = supervised_token_nll(h, mb["labels"], model.lm_head)
+                nll, _ = supervised_token_nll(h, mb["labels"], model.lm_head, index=idx)
                 loss = token_level_loss(nll, n_tok)
-            sft_sum += loss.item()
+            sft_t += loss.detach()
             if lam > 0 and m == tc["grad_accum"] - 1:
                 omega = 0.5 * sum((p.float() - theta0[n]).pow(2).sum() for n, p in named)
                 loss = loss + lam * omega
@@ -203,6 +206,7 @@ def main():
         lr = sched.get_last_lr()[0]
         gnorm, skipped = stepper.step()
         sched.step()
+        sft_sum = sft_t.item()
         rec = {"update": u + 1, "sft_loss": sft_sum, "lr": lr, "grad_norm": gnorm, "skipped": skipped,
                "loss_scale": stepper.scaler.get_scale() if stepper.enabled else 1.0,
                "n_tokens": n_tok, "elapsed_s": timer.elapsed()}
