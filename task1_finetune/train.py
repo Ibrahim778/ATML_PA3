@@ -68,6 +68,12 @@ def load_model(cfg, mcfg, device):
     if cfg["train"]["gradient_checkpointing"]:
         model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
         model.enable_input_require_grads()
+    if cfg["train"].get("compile") and device.type in ("cuda", "mps"):
+        # Regional compilation: each decoder layer (incl. its adapters) becomes one fused graph,
+        # cutting the many small kernel launches of the adapter path. dynamic=True avoids a
+        # recompile for every sequence length.
+        for layer in model.model.layers:
+            layer.compile(dynamic=True)
     return model, info
 
 
@@ -145,7 +151,7 @@ def main():
 
     named = L.unique_named_parameters(model)
     opt = torch.optim.AdamW(param_groups(named, tc["weight_decay"]), lr=mcfg["lr"],
-                            betas=tuple(tc["betas"]), eps=tc["eps"])
+                            betas=tuple(tc["betas"]), eps=tc["eps"], fused=device.type == "cuda")
     sched = make_scheduler(opt, tc["num_updates"], tc["warmup_updates"], 0.0)
     stepper = AmpStepper(opt, [p for _, p in named], device, tc["clip_norm"])
     counts = L.count_params(model)

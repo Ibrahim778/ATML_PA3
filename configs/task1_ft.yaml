@@ -23,6 +23,7 @@ train:
   clip_norm: 1.0
   amp_dtype: float16
   gradient_checkpointing: true
+  compile: true           # per-layer torch.compile (CUDA/MPS); set false if it errors
   checkpoint_updates: [312, 625, 937, 1250]
   log_every: 1
 

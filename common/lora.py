@@ -10,6 +10,7 @@ import time
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class LoRALinear(nn.Module):
@@ -40,10 +41,12 @@ class LoRALinear(nn.Module):
         out = self.base(x)
         B, A = self.factors()
         h = self.dropout(x)
-        dt = out.dtype
-        z = torch.nn.functional.linear(h.to(A.dtype) if not torch.is_autocast_enabled() else h, A)
-        z = torch.nn.functional.linear(z, B)
-        return out + (self.scaling * z).to(dt)
+        # scaling is folded into the small (d_out x r) factor, so no extra pass over the
+        # full-size output; under autocast the FP32 factors are cast once and cached.
+        Bs = B * self.scaling
+        if torch.is_autocast_enabled(x.device.type):
+            return out + F.linear(F.linear(h, A), Bs)
+        return out + F.linear(F.linear(h.to(A.dtype), A), Bs).to(out.dtype)
 
 
 class OPLoRALinear(LoRALinear):
