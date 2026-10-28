@@ -86,7 +86,7 @@ def cache_activations(cfg, layers, device):
     from transformers import AutoModelForCausalLM, AutoTokenizer
     tok = AutoTokenizer.from_pretrained(cfg["model_id"], revision=cfg["model_revision"])
     model = AutoModelForCausalLM.from_pretrained(cfg["model_id"], revision=cfg["model_revision"],
-                                                 torch_dtype=torch.float32).to(device).eval()
+                                                 dtype=torch.float32).to(device).eval()
     store = {}
     hooks = [model.model.layers[li].mlp.down_proj.register_forward_pre_hook(
         lambda mod, inp, li=li: store.__setitem__(li, inp[0][0, -1].float().cpu().clone())) for li in layers]

@@ -70,7 +70,6 @@ conditions:
   oplora16_1250: {method: oplora16, update: 1250}
 
 eval:
-  lm_eval_version: 0.4.8
   dtype: float16
   batch_size: 128          # likelihood tasks
   gen_batch_size: 128      # gsm8k_cot generation

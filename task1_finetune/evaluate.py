@@ -112,6 +112,7 @@ def main():
     ap.add_argument("--config", default="configs/task1_ft.yaml")
     ap.add_argument("--condition", required=True)
     ap.add_argument("--tasks", nargs="*", default=None, help="subset of gsm8k hellaswag boolq arc_easy")
+    ap.add_argument("--fresh", action="store_true", help="discard existing checkpoints/outputs of this run and start over")
     args = ap.parse_args()
     cfg = load_yaml(args.config)
     set_seed(cfg["seed"])
@@ -119,7 +120,7 @@ def main():
     rd = results_dir(cfg)
     path = condition_model_path(cfg, args.condition)
     out_json = rd / f"{args.condition}_eval.json"
-    agg_all = load_json(out_json) if out_json.exists() else {"condition": args.condition, "model_path": path}
+    agg_all = load_json(out_json) if out_json.exists() and not args.fresh else {"condition": args.condition, "model_path": path}
     agg_all["lm_eval_version"] = md.version("lm_eval")
     agg_all["transformers_version"] = md.version("transformers")
     tasks = args.tasks or ["gsm8k"] + list(cfg["eval"]["likelihood_tasks"])

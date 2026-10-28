@@ -9,6 +9,7 @@ python -m task1_finetune.train --config configs/task1_ft.yaml --method full
 """
 import argparse
 import json
+import shutil
 import time
 from pathlib import Path
 
@@ -50,7 +51,7 @@ def load_model(cfg, mcfg, device):
     full = mcfg["kind"] == "full"
     model = AutoModelForCausalLM.from_pretrained(
         cfg["model_id"], revision=cfg["model_revision"],
-        torch_dtype=torch.float32 if full else torch.float16)   # FP32 master params for Full FT
+        dtype=torch.float32 if full else torch.float16)   # FP32 master params for Full FT
     model.config.use_cache = False
     info = {}
     if not full:
@@ -117,12 +118,15 @@ def main():
     ap.add_argument("--config", default="configs/task1_ft.yaml")
     ap.add_argument("--method", required=True, choices=["full", "l2sp", "lora4", "lora16", "oplora16"])
     ap.add_argument("--max-updates", type=int, default=None, help="stop early (runtime estimate)")
+    ap.add_argument("--fresh", action="store_true", help="discard existing checkpoints/outputs of this run and start over")
     args = ap.parse_args()
     cfg = load_yaml(args.config)
     tc, mcfg = cfg["train"], cfg["methods"][args.method]
     device = get_device(cfg["device"])
     set_seed(cfg["seed"])
     run_dir = outputs_dir(cfg) / args.method
+    if args.fresh and run_dir.exists():
+        shutil.rmtree(run_dir)   # checkpoints of this method only; the tokenised-data cache is kept
     run_dir.mkdir(parents=True, exist_ok=True)
     rd = results_dir(cfg)
     log_path = rd / f"{args.method}_train_log.jsonl"

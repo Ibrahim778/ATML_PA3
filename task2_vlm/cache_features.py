@@ -65,10 +65,14 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/task2_vlm.yaml")
     ap.add_argument("--batch-size", type=int, default=64)
+    ap.add_argument("--fresh", action="store_true", help="discard existing checkpoints/outputs of this run and start over")
     args = ap.parse_args()
     cfg = load_yaml(args.config)
     device = get_device(cfg["device"])
     out = repo_path(cfg["data"]["feature_cache"])
+    if args.fresh:
+        for f in ("index.json", "features.npy", "progress.json"):
+            (out / f).unlink(missing_ok=True)
     out.mkdir(parents=True, exist_ok=True)
     keys = needed_images(cfg)
     idx_path = out / "index.json"
@@ -84,7 +88,7 @@ def main():
     from PIL import Image
     from transformers import SiglipImageProcessor, SiglipVisionModel
     proc = SiglipImageProcessor.from_pretrained(cfg["vision_id"])
-    enc = SiglipVisionModel.from_pretrained(cfg["vision_id"], torch_dtype=torch.float32).to(device).eval()
+    enc = SiglipVisionModel.from_pretrained(cfg["vision_id"], dtype=torch.float32).to(device).eval()
     reset_peak_memory(device)
     t0 = time.perf_counter()
     for s in tqdm(range(done, len(keys), args.batch_size), desc="SigLIP features", initial=done // args.batch_size,

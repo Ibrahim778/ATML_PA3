@@ -38,8 +38,10 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Versions are pinned in `requirements.txt` (notably `transformers==4.51.3`, `lm_eval==0.4.8`,
-`math-verify==0.7.0`, `torch==2.6.0`). Record the versions actually used with `pip freeze > results/env.txt`.
+`requirements.txt` is not pinned (pinned wheels such as `torch==2.6.0` do not exist for newer Python
+versions). The code is tested with torch 2.11-2.15, transformers 5.21, lm-eval 0.4.13 and math-verify 0.9;
+it needs `transformers>=4.56`. Record the versions actually used for the reported runs with
+`pip freeze > results/env.txt` and commit that file.
 Device selection is automatic (`cuda` -> `mps` -> `cpu`); set `device:` in `configs/base.yaml` to force one.
 Hardware used for the reported runs: _fill in (GPU model, VRAM)_.
 
@@ -56,7 +58,9 @@ Hardware used for the reported runs: _fill in (GPU model, VRAM)_.
 Before running Task 3, read `data/ATML-PA3-Data/README.MD` and check `configs/task3_ttc.yaml`:
 the folder names (`data.datasets.*.folder`), the parquet column names (`data.columns`), where the
 MathVista metadata lives (`data.mathvista_metadata` if it is a separate file) and the exact
-Qwen2.5-3B-Instruct revision for the live run (`live.revision`).
+Qwen2.5-3B-Instruct revision for the live run (`live.revision`). The PDF asks for the *original*
+model revision listed in that README, i.e. a specific commit hash of the Hugging Face repo; the
+default `main` would silently use whatever the latest upload is.
 `python -m scripts.prepare_data_task3 --inspect` prints the joined schema.
 
 ## Commands
@@ -95,6 +99,13 @@ python -m task3_ttc.signals --config configs/task3_ttc.yaml
 python -m task3_ttc.adaptive --config configs/task3_ttc.yaml
 python -m task3_ttc.live_generation --config configs/task3_ttc.yaml     # GPU; resumable per question
 ```
+
+### Re-running and starting over
+The `run_task*.sh` scripts skip every step whose output already exists, and unfinished training resumes
+from its newest checkpoint. `FORCE=1 ./run_taskN.sh` reruns every step from scratch: training discards
+that run's checkpoints (`outputs/task1/<method>`, `outputs/task2/<run>`), evaluation, qualitative and the
+live run ignore earlier outputs, and feature caching rebuilds the cache. Do not use `FORCE=1` to resume
+an interrupted run. The same behaviour is available per command with `--fresh`.
 
 ### Report tables and figures
 ```bash

@@ -26,7 +26,7 @@ CHECK_PROMPTS = [
 
 def plain_model(cfg, dtype=torch.float32):
     from transformers import AutoModelForCausalLM
-    return AutoModelForCausalLM.from_pretrained(cfg["model_id"], revision=cfg["model_revision"], torch_dtype=dtype)
+    return AutoModelForCausalLM.from_pretrained(cfg["model_id"], revision=cfg["model_revision"], dtype=dtype)
 
 
 @torch.no_grad()

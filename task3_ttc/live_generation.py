@@ -71,17 +71,20 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/task3_ttc.yaml")
     ap.add_argument("--limit", type=int, default=None, help="debug: only the first k questions")
+    ap.add_argument("--fresh", action="store_true", help="discard existing checkpoints/outputs of this run and start over")
     args = ap.parse_args()
     cfg = load_yaml(args.config)
     lc = cfg["live"]
     rd = results_dir(cfg)
     out_path = rd / "live_per_example.jsonl"
+    if args.fresh and out_path.exists():
+        out_path.unlink()
     set_seed(cfg["seed"])
     device = get_device(cfg["device"])
     from transformers import AutoModelForCausalLM, AutoTokenizer
     tok = AutoTokenizer.from_pretrained(lc["model_id"], revision=lc["revision"])
     model = AutoModelForCausalLM.from_pretrained(lc["model_id"], revision=lc["revision"],
-                                                 torch_dtype=torch.float16).to(device).eval()
+                                                 dtype=torch.float16).to(device).eval()
     qs = load_questions(cfg, "math")
     live_ids = load_splits(cfg)["math"]["live"][: args.limit]
     done = {r["qid"] for r in read_jsonl(out_path)}

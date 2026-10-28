@@ -1,6 +1,8 @@
-# Python 3.10-3.12 recommended (lm-eval / math-verify wheels).
+# Python 3.10-3.12 recommended (lm-eval / math-verify wheels). Unpinned: record what you ran with
+# `pip freeze > results/env.txt`. Tested with torch 2.11-2.15, transformers 5.21, lm-eval 0.4.13.
 torch
-transformers
+torchvision         # default (non-PIL) SigLIP image processor in transformers 5
+transformers>=4.56   # `dtype=` argument in from_pretrained
 peft                # only used for cross-checks; LoRA/OPLoRA are implemented in common/lora.py
 accelerate
 lm_eval

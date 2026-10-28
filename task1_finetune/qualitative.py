@@ -73,6 +73,7 @@ def math_markers(text):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/task1_ft.yaml")
+    ap.add_argument("--fresh", action="store_true", help="discard existing checkpoints/outputs of this run and start over")
     args = ap.parse_args()
     cfg = load_yaml(args.config)
     qc = cfg["qualitative"]
@@ -81,6 +82,8 @@ def main():
     prompts = load_questions(qc["questions_file"])
     rd = results_dir(cfg)
     out_path = rd / "qualitative_responses.jsonl"
+    if args.fresh and out_path.exists():
+        out_path.unlink()
     done = {(r["condition"], r["question"], r["format"]) for r in read_jsonl(out_path)}
     from transformers import AutoModelForCausalLM, AutoTokenizer
     for cond in cfg["conditions"]:
@@ -88,7 +91,7 @@ def main():
             continue
         path = condition_model_path(cfg, cond)
         tok = AutoTokenizer.from_pretrained(path)
-        model = AutoModelForCausalLM.from_pretrained(path, torch_dtype=torch.float16).to(device).eval()
+        model = AutoModelForCausalLM.from_pretrained(path, dtype=torch.float16).to(device).eval()
         rows = []
         for qi, fm, p in tqdm(prompts, desc=cond):
             if (cond, qi, fm) in done:

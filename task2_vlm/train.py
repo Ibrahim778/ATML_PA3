@@ -10,6 +10,7 @@ python -m task2_vlm.train --config configs/task2_vlm.yaml
 """
 import argparse
 import math
+import shutil
 import time
 
 import torch
@@ -46,7 +47,7 @@ def add_lora(vlm, cfg):
 def build_model(cfg, device, with_lora=False):
     from transformers import AutoModelForCausalLM, AutoTokenizer
     tok = AutoTokenizer.from_pretrained(cfg["model_id"])
-    lm = AutoModelForCausalLM.from_pretrained(cfg["model_id"], torch_dtype=torch.float16).to(device)
+    lm = AutoModelForCausalLM.from_pretrained(cfg["model_id"], dtype=torch.float16).to(device)
     for p in lm.parameters():
         p.requires_grad_(False)
     set_seed(cfg["seed"])
@@ -97,12 +98,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/task2_vlm.yaml")
     ap.add_argument("--max-updates", type=int, default=None, help="stop early (runtime estimate)")
+    ap.add_argument("--fresh", action="store_true", help="discard existing checkpoints/outputs of this run and start over")
     args = ap.parse_args()
     cfg = load_yaml(args.config)
     tc = cfg["train"]
     device = get_device(cfg["device"])
     set_seed(cfg["seed"])
     rdir, res = run_dir(cfg), results_dir(cfg)
+    if args.fresh and rdir.exists():
+        shutil.rmtree(rdir)   # this run's checkpoints and stage weights; the feature cache is kept
     rdir.mkdir(parents=True, exist_ok=True)
     log_path, dev_path = res / f"{cfg['run_name']}_train_log.jsonl", res / f"{cfg['run_name']}_dev_log.jsonl"
 
