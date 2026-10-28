@@ -1,18 +1,18 @@
 # Python 3.10-3.12 recommended (lm-eval / math-verify wheels).
-torch==2.6.0
-transformers==4.51.3        # first release with Qwen3 support
-peft==0.15.2                # only used for cross-checks; LoRA/OPLoRA are implemented in common/lora.py
-accelerate==1.6.0
-lm_eval==0.4.8
-datasets==3.5.0
-pyarrow==19.0.1
-safetensors==0.5.3
-math-verify==0.7.0
-pycocotools==2.0.8
-numpy==1.26.4
-scipy==1.15.2
-pandas==2.2.3
-matplotlib==3.10.1
-pyyaml==6.0.2
-tqdm==4.67.1
-pillow==11.2.1
+torch
+transformers
+peft                # only used for cross-checks; LoRA/OPLoRA are implemented in common/lora.py
+accelerate
+lm_eval
+datasets
+pyarrow
+safetensors
+math-verify
+pycocotools
+numpy
+scipy
+pandas
+matplotlib
+pyyaml
+tqdm
+pillow

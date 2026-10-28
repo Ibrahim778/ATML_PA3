@@ -1,0 +1,585 @@
+<title>PA3 Reading Companion</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky contents rail on the left (desktop), one reading column on the right; stacks to one column on phones. */
+:root {
+  --bg: #f5f7f9;
+  --surface: #ffffff;
+  --fg: #1b2430;
+  --muted: #5a6676;
+  --line: #d9e0e8;
+  --accent: #1f5f8b;
+  --t1: #6a3fb5;  --t1-soft: #efe8fb;
+  --t2: #0d7f73;  --t2-soft: #e1f4f1;
+  --t3: #b0610c;  --t3-soft: #fbefe1;
+  --eq-bg: #eef2f6;
+  --code-bg: #e9eef4;
+  --req: #a3263b;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161d; --surface: #182029; --fg: #e3e9f0; --muted: #9aa6b5; --line: #2a3542;
+    --accent: #6fb3e3;
+    --t1: #b79bf0; --t1-soft: #261d3a; --t2: #5cc9bb; --t2-soft: #12302c; --t3: #f0a75a; --t3-soft: #36260f;
+    --eq-bg: #1d2731; --code-bg: #212c38; --req: #f07a8c;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161d; --surface: #182029; --fg: #e3e9f0; --muted: #9aa6b5; --line: #2a3542;
+  --accent: #6fb3e3;
+  --t1: #b79bf0; --t1-soft: #261d3a; --t2: #5cc9bb; --t2-soft: #12302c; --t3: #f0a75a; --t3-soft: #36260f;
+  --eq-bg: #1d2731; --code-bg: #212c38; --req: #f07a8c;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 17px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 64px;
+}
+a { color: var(--accent); }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 48px; }
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; font-family: var(--font-display); font-size: 14px; }
+nav.toc ol { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
+nav.toc a { color: var(--muted); text-decoration: none; display: block; padding: 3px 0; }
+nav.toc a:hover { color: var(--fg); }
+nav.toc .grp { margin-top: 14px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; }
+nav.toc .grp.t1 { color: var(--t1); } nav.toc .grp.t2 { color: var(--t2); } nav.toc .grp.t3 { color: var(--t3); }
+main { min-width: 0; }
+h1, h2, h3, h4 { font-family: var(--font-display); text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 700; letter-spacing: -.01em; }
+h2 { font-size: 28px; font-weight: 700; margin-top: 56px; padding-top: 8px; }
+h3 { font-size: 21px; font-weight: 700; }
+h4 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700; margin-top: 18px; }
+p { margin: 10px 0; max-width: 70ch; }
+.lede { color: var(--muted); font-size: 18px; max-width: 64ch; }
+.meta { font-family: var(--font-display); font-size: 13px; color: var(--muted); margin-top: 6px; }
+code, .mono { font-family: var(--font-mono); font-size: .82em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.chip { display: inline-block; font-family: var(--font-display); font-size: 12px; font-weight: 700; letter-spacing: .04em; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.chip.t1 { background: var(--t1-soft); color: var(--t1); }
+.chip.t2 { background: var(--t2-soft); color: var(--t2); }
+.chip.t3 { background: var(--t3-soft); color: var(--t3); }
+.chip.req { border: 1px solid var(--req); color: var(--req); background: transparent; }
+.chip.opt { border: 1px solid var(--line); color: var(--muted); background: transparent; }
+.table-wrap { overflow-x: auto; margin: 18px 0; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+th { font-family: var(--font-display); font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 700; }
+tr:last-child td { border-bottom: 0; }
+td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.task-intro { border-left: 4px solid var(--c); padding: 4px 0 4px 18px; margin-top: 14px; }
+.task-intro.t1 { --c: var(--t1); } .task-intro.t2 { --c: var(--t2); } .task-intro.t3 { --c: var(--t3); }
+article.reading { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 22px 24px; margin-top: 22px; }
+article.reading header { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
+article.reading header h3 { flex: 1 1 100%; }
+.cite { font-size: 15px; color: var(--muted); margin: 4px 0 0; }
+.eq { font-family: var(--font-body); font-style: italic; background: var(--eq-bg); border-radius: 6px; padding: 12px 16px; margin: 12px 0; overflow-x: auto; white-space: nowrap; font-size: 17px; }
+.eq .lbl { font-style: normal; font-family: var(--font-display); font-size: 12px; color: var(--muted); margin-left: 14px; }
+.eq sub, .eq sup { font-size: .72em; }
+ul { padding-left: 22px; margin: 8px 0; max-width: 70ch; }
+li { margin: 4px 0; }
+.code-map { display: grid; gap: 6px; margin: 10px 0; }
+.code-map div { display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr); gap: 12px; font-size: 15px; padding: 6px 0; border-top: 1px dashed var(--line); }
+.code-map div:first-child { border-top: 0; }
+.qa { background: var(--bg); border-radius: 8px; padding: 10px 16px; margin-top: 14px; }
+.qa ul { margin: 4px 0; }
+.note { font-size: 15px; color: var(--muted); }
+.flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 16px 0; }
+.flow > div { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; min-width: 0; }
+.flow h4 { margin: 0 0 6px; }
+.flow ol { margin: 0; padding-left: 20px; font-size: 15px; }
+@media (max-width: 860px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  nav.toc { position: static; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+  nav.toc ol { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .code-map div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  article.reading { padding: 18px 16px; }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <ol>
+    <li><a href="#map">Reading map</a></li>
+    <li><a href="#order">Suggested order</a></li>
+    <li class="grp t1">Task 1 · Fine-tuning</li>
+    <li><a href="#oplora">OPLoRA</a></li>
+    <li><a href="#lora">LoRA</a></li>
+    <li><a href="#l2sp">L2-SP</a></li>
+    <li><a href="#lessforget">LoRA Learns Less…</a></li>
+    <li><a href="#lmeval">lm-eval harness</a></li>
+    <li class="grp t2">Task 2 · VLM</li>
+    <li><a href="#llava">Visual Instruction Tuning</a></li>
+    <li><a href="#vqa2">Making the V in VQA Matter</a></li>
+    <li><a href="#siglip">SigLIP</a></li>
+    <li><a href="#vqaeval">VQA scoring code</a></li>
+    <li class="grp t3">Task 3 · Test-time compute</li>
+    <li><a href="#selfcert">Self-Certainty</a></li>
+    <li><a href="#visconf">VisConf</a></li>
+    <li><a href="#selfcons">Self-Consistency</a></li>
+    <li><a href="#selfrefine">Self-Refine</a></li>
+    <li><a href="#adaptive">Adaptive-Consistency</a></li>
+    <li><a href="#tot">Tree of Thoughts</a></li>
+    <li><a href="#prm">Let's Verify Step by Step</a></li>
+    <li class="grp" style="color:var(--muted)">Shared</li>
+    <li><a href="#shared">Methods used everywhere</a></li>
+  </ol>
+</nav>
+
+<main>
+<header>
+  <p class="meta">EE-5102 / CS-6304 · Advanced Topics in ML · Programming Assignment 3 · due 06 Nov 2026</p>
+  <h1>PA3 Reading Companion</h1>
+  <p class="lede">Every reading the assignment cites, tied to the task it supports, the ideas and equations you need from it, and the file in this repo where each idea is implemented. Use it to prepare for writing the report: the report must be in your own words, so this page explains the material and leaves the analysis to you.</p>
+  <p class="note">The repo contains no paper PDFs, so the reading list comes from the "Readings" box of each task in <code>ATML-PA3.pdf</code>. Line numbers refer to the code as it stands on <code>main</code> today.</p>
+</header>
+
+<section id="map">
+<h2>Reading map</h2>
+<p>Three readings are required, one per task. The required ones define the exact equations you implement; the optional ones explain the baselines and the evaluation tools.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Reading</th><th>Task</th><th>Status</th><th>What you take from it</th><th>Main code</th></tr></thead>
+<tbody>
+<tr><td><a href="#oplora">Xiong &amp; Xie, OPLoRA</a> §3.2–3.3, Prop. 2</td><td><span class="chip t1">T1</span></td><td><span class="chip req">Required</span></td><td>Two-sided projection of LoRA factors; ρ<sub>k</sub> interference metric</td><td><code>common/lora.py</code>, <code>task1_finetune/diagnostics.py</code></td></tr>
+<tr><td><a href="#lora">Hu et al., LoRA</a></td><td><span class="chip t1">T1</span> <span class="chip t2">T2</span></td><td><span class="chip opt">Optional</span></td><td>W = W<sub>0</sub> + (α/r)BA, zero-B init, merging</td><td><code>common/lora.py</code>, <code>task1_finetune/merge_export.py</code></td></tr>
+<tr><td><a href="#l2sp">Li et al., L2-SP</a></td><td><span class="chip t1">T1</span></td><td><span class="chip opt">Optional</span></td><td>Penalty toward the starting weights instead of toward zero</td><td><code>task1_finetune/train.py</code></td></tr>
+<tr><td><a href="#lessforget">Biderman et al., LoRA Learns Less and Forgets Less</a></td><td><span class="chip t1">T1</span></td><td><span class="chip opt">Optional</span></td><td>The adaptation/retention trade-off you are asked to measure</td><td>Analysis of <code>results/task1</code></td></tr>
+<tr><td><a href="#lmeval">lm-evaluation-harness docs</a></td><td><span class="chip t1">T1</span></td><td><span class="chip opt">Optional</span></td><td>acc vs acc_norm, gsm8k_cot flexible extraction</td><td><code>task1_finetune/evaluate.py</code></td></tr>
+<tr><td><a href="#llava">Liu et al., Visual Instruction Tuning (LLaVA)</a></td><td><span class="chip t2">T2</span></td><td><span class="chip req">Required</span></td><td>Connector design, alignment stage, instruction-tuning stage</td><td><code>task2_vlm/model.py</code>, <code>task2_vlm/train.py</code></td></tr>
+<tr><td><a href="#vqa2">Goyal et al., Making the V in VQA Matter</a></td><td><span class="chip t2">T2</span></td><td><span class="chip opt">Optional</span></td><td>Complementary pairs and language priors</td><td><code>scripts/prepare_data_task2.py</code>, <code>task2_vlm/evaluate_final.py</code></td></tr>
+<tr><td><a href="#siglip">Zhai et al., SigLIP</a></td><td><span class="chip t2">T2</span></td><td><span class="chip opt">Optional</span></td><td>What the frozen vision features are and how they were trained</td><td><code>task2_vlm/cache_features.py</code></td></tr>
+<tr><td><a href="#vqaeval">VQA answer normalisation and scoring code</a></td><td><span class="chip t2">T2</span></td><td><span class="chip opt">Optional</span></td><td>Answer normalisation, soft consensus accuracy</td><td><code>task2_vlm/vqa_norm.py</code></td></tr>
+<tr><td><a href="#selfcert">Kang et al., Self-Certainty</a></td><td><span class="chip t3">T3</span></td><td><span class="chip req">Required</span></td><td>K<sub>i</sub> = mean KL(U ‖ p); rank-weighted voting</td><td><code>task3_ttc/data.py</code>, <code>task3_ttc/selection.py</code></td></tr>
+<tr><td><a href="#visconf">Usman et al., VisConf</a> §3–5</td><td><span class="chip t3">T3</span></td><td><span class="chip req">Required</span></td><td>Visual engagement, percentile calibration, fusion, RWC</td><td><code>task3_ttc/selection.py</code>, <code>task3_ttc/signals.py</code></td></tr>
+<tr><td><a href="#selfcons">Wang et al., Self-Consistency</a></td><td><span class="chip t3">T3</span></td><td><span class="chip opt">Optional</span></td><td>Sample many chains, vote on the final answer</td><td><code>task3_ttc/selection.py</code></td></tr>
+<tr><td><a href="#selfrefine">Madaan et al., Self-Refine</a></td><td><span class="chip t3">T3</span></td><td><span class="chip opt">Optional</span></td><td>Feedback-then-revise with the same model</td><td><code>task3_ttc/live_generation.py</code></td></tr>
+<tr><td><a href="#adaptive">Aggarwal et al., Adaptive-Consistency</a></td><td><span class="chip t3">T3</span></td><td><span class="chip opt">Optional</span></td><td>Stop sampling once the vote is settled</td><td><code>task3_ttc/adaptive.py</code></td></tr>
+<tr><td><a href="#tot">Yao et al., Tree of Thoughts</a></td><td><span class="chip t3">T3</span></td><td><span class="chip opt">Optional</span></td><td>Search with intermediate self-evaluation (context only)</td><td>Not implemented</td></tr>
+<tr><td><a href="#prm">Lightman et al., Let's Verify Step by Step</a></td><td><span class="chip t3">T3</span></td><td><span class="chip opt">Optional</span></td><td>Outcome vs process verifiers (context only)</td><td>Not implemented</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="order">
+<h2>Suggested order</h2>
+<p>If time is short, read the three required papers closely and skim the rest for the one idea listed under each.</p>
+<div class="flow">
+  <div><h4 style="color:var(--t1)">Task 1</h4><ol><li>LoRA §4.1 (parameterisation, init)</li><li>OPLoRA §3.2–3.3, Prop. 2</li><li>L2-SP §3 (the penalty)</li><li>LoRA Learns Less… abstract + forgetting figures</li><li>lm-eval docs on acc_norm and filters</li></ol></div>
+  <div><h4 style="color:var(--t2)">Task 2</h4><ol><li>LLaVA §4 (architecture, two-stage training)</li><li>VQA v2 §3–4 (pairs, priors)</li><li>VQA eval code (normalisation)</li><li>SigLIP §3 (loss) for background</li></ol></div>
+  <div><h4 style="color:var(--t3)">Task 3</h4><ol><li>Self-Consistency (the baseline)</li><li>Self-Certainty §3–4 (KL score, Borda vote)</li><li>VisConf §3–5</li><li>Self-Refine, Adaptive-Consistency</li><li>ToT and PRM for the "search and verifiers" paragraph</li></ol></div>
+</div>
+</section>
+
+<!-- ============================== TASK 1 ============================== -->
+<h2 id="t1">Task 1 · LLM fine-tuning</h2>
+<div class="task-intro t1">
+<p>The task frames every method as a choice in one objective. Each reading explains one of the three knobs: the loss, the proximity penalty Ω, or the allowed update set S.</p>
+<div class="eq">min<sub>θ</sub> L<sub>SFT</sub>(θ) + λ Ω(θ, θ<sub>0</sub>) &nbsp; subject to &nbsp; θ − θ<sub>0</sub> ∈ S</div>
+<div class="table-wrap"><table>
+<thead><tr><th>Run</th><th>Ω, λ</th><th>S (allowed updates)</th><th>Peak LR</th><th>Reading</th></tr></thead>
+<tbody>
+<tr><td>Full FT</td><td>λ = 0</td><td>everything</td><td class="n">2×10<sup>−5</sup></td><td>baseline</td></tr>
+<tr><td>Full FT + L2-SP</td><td>½‖θ−θ<sub>0</sub>‖², λ = 10<sup>−3</sup></td><td>everything</td><td class="n">2×10<sup>−5</sup></td><td>L2-SP</td></tr>
+<tr><td>LoRA-4 / LoRA-16</td><td>λ = 0</td><td>rank ≤ r per target matrix</td><td class="n">2×10<sup>−4</sup></td><td>LoRA</td></tr>
+<tr><td>OPLoRA-16 (k = 128)</td><td>λ = 0</td><td>rank ≤ 16 and orthogonal to top-128 singular subspaces</td><td class="n">2×10<sup>−4</sup></td><td>OPLoRA</td></tr>
+</tbody></table></div>
+</div>
+
+<article class="reading" id="oplora">
+<header><span class="chip t1">Task 1</span><span class="chip req">Required</span><h3>OPLoRA: Orthogonal Projection LoRA Prevents Catastrophic Forgetting during Parameter-Efficient Fine-Tuning</h3></header>
+<p class="cite">Yifeng Xiong, Xiaohui Xie · AAAI 2026 · <a href="https://arxiv.org/abs/2510.13003">arXiv:2510.13003</a> · read §3.2, §3.3 and Proposition 2</p>
+<h4>What it covers</h4>
+<p>The paper argues that LoRA forgets because its update can land on the directions that carry most of a pretrained weight's "energy", the leading singular vectors. §3.2 measures how much of an update falls there. §3.3 removes that overlap by projecting the LoRA factors, and Proposition 2 proves the protected singular triples survive exactly.</p>
+<h4>Key ideas and equations</h4>
+<p>Write the pretrained weight with its SVD and split off the top k directions:</p>
+<div class="eq">W<sub>0</sub> = UΣV<sup>⊤</sup> = U<sub>k</sub>Σ<sub>k</sub>V<sub>k</sub><sup>⊤</sup> + U<sub>⊥</sub>Σ<sub>⊥</sub>V<sub>⊥</sub><sup>⊤</sup></div>
+<p><b>Interference metric (§3.2, Eq. 5).</b> The fraction of the update's squared Frobenius norm inside the top-k output (column) space. This is exactly the ρ<sub>k</sub> the assignment asks you to report.</p>
+<div class="eq">ρ<sub>k</sub> = ‖U<sub>k</sub>U<sub>k</sub><sup>⊤</sup>ΔW‖<sub>F</sub><sup>2</sup> / ‖ΔW‖<sub>F</sub><sup>2</sup> ∈ [0, 1]</div>
+<p><b>One-sided projection is not enough (Prop. 1).</b> Using only P<sub>L</sub> = I − U<sub>k</sub>U<sub>k</sub><sup>⊤</sup> keeps every output of ΔW orthogonal to U<sub>k</sub>, but it does not preserve the singular values or right singular vectors of W<sub>0</sub>.</p>
+<p><b>Two-sided projection (Prop. 2).</b> With P<sub>L</sub> = I − U<sub>k</sub>U<sub>k</sub><sup>⊤</sup> and P<sub>R</sub> = I − V<sub>k</sub>V<sub>k</sub><sup>⊤</sup>, set ΔW = P<sub>L</sub>BAP<sub>R</sub> for any A, B. Then for i = 1…k:</p>
+<div class="eq">(W<sub>0</sub>+ΔW)v<sub>i</sub> = σ<sub>i</sub>u<sub>i</sub>, &nbsp; (W<sub>0</sub>+ΔW)<sup>⊤</sup>u<sub>i</sub> = σ<sub>i</sub>v<sub>i</sub> &nbsp; ⇔ &nbsp; U<sub>k</sub><sup>⊤</sup>(W<sub>0</sub>+ΔW)V<sub>k</sub> = Σ<sub>k</sub></div>
+<p>Why it works: ΔW V<sub>k</sub> = 0 because of P<sub>R</sub>, and U<sub>k</sub><sup>⊤</sup>ΔW = 0 because of P<sub>L</sub>. So the top-k block of W is untouched. Note what the proposition does not claim: the protected triples stay singular triples, but the update can still change everything else, and nothing guarantees that behaviour on any benchmark is preserved. The assignment makes this same point.</p>
+<p><b>Factor form used in the assignment.</b> Projecting the factors gives the same ΔW without building dense d×d projectors:</p>
+<div class="eq">B̃ = B − U<sub>k</sub>(U<sub>k</sub><sup>⊤</sup>B), &nbsp; Ã = A − (AV<sub>k</sub>)V<sub>k</sub><sup>⊤</sup>, &nbsp; ΔW = (α/r) B̃Ã = (α/r) P<sub>L</sub>BAP<sub>R</sub></div>
+<h4>Where it shows up in the code</h4>
+<div class="code-map">
+  <div><code>common/lora.py:49</code><span><code>OPLoRALinear</code> computes the SVD of the FP16 backbone weight cast to FP32 once (lines 53–56) and stores U<sub>k</sub>, V<sub>k</sub> as frozen buffers.</span></div>
+  <div><code>common/lora.py:58</code><span><code>factors()</code> returns B̃ and Ã exactly as in the equation above. The forward pass and <code>delta_weight()</code> both go through it, so training, diagnostics and export all use projected factors.</span></div>
+  <div><code>common/lora.py:97</code><span><code>adapter_state_dict</code> exports <code>proj_A</code>/<code>proj_B</code> next to the raw factors; <code>merge_factors_into</code> (line 123) prefers the projected ones.</span></div>
+  <div><code>task1_finetune/merge_export.py</code><span>Checks ‖U<sub>k</sub><sup>⊤</sup>B̃‖ and ‖ÃV<sub>k</sub>‖ against freshly computed bases. This is the "numerical verification of constraints" the PDF wants kept separate from benchmark evidence.</span></div>
+  <div><code>task1_finetune/diagnostics.py:129</code><span>ρ<sub>k</sub> for every run on <code>down_proj</code> in layers 0, 13, 27. For OPLoRA it should be ≈ 0 by construction; for LoRA and Full FT it is the interesting number.</span></div>
+</div>
+<div class="qa"><h4>Check your understanding</h4><ul>
+<li>LoRA-16 and OPLoRA-16 start from identical raw A and zero B. Why does that make their first step identical in output, and when do they diverge?</li>
+<li>ρ<sub>k</sub> only measures the <em>output</em> subspace U<sub>k</sub>. What would a matching input-side metric with V<sub>k</sub> tell you, and why is ρ<sub>k</sub> still enough to show OPLoRA's constraint holds?</li>
+<li>The paper reports ρ<sub>128</sub> ≈ 0.003 for OPLoRA-128 due to a low-rank SVD approximation. The repo uses a full SVD, so expect values much closer to zero.</li>
+</ul></div>
+</article>
+
+<article class="reading" id="lora">
+<header><span class="chip t1">Task 1</span><span class="chip t2">Task 2</span><span class="chip opt">Optional</span><h3>LoRA: Low-Rank Adaptation of Large Language Models</h3></header>
+<p class="cite">Hu et al. · ICLR 2022 · <a href="https://arxiv.org/abs/2106.09685">arXiv:2106.09685</a> · focus on §4.1 (parameterisation, initialisation, merging)</p>
+<h4>What it covers</h4>
+<p>Freeze the pretrained weights and learn a low-rank correction for selected matrices. The hypothesis is that the change needed for adaptation has low "intrinsic rank". After training, the correction can be merged into the weight, so inference costs nothing extra.</p>
+<h4>Key ideas and equations</h4>
+<div class="eq">h = W<sub>0</sub>x + (α/r) BAx, &nbsp; A ∈ ℝ<sup>r×d<sub>in</sub></sup>, &nbsp; B ∈ ℝ<sup>d<sub>out</sub>×r</sup></div>
+<ul>
+<li><b>Initialisation.</b> A random, B = 0, so ΔW = 0 at step 0 and the model starts exactly at the pretrained checkpoint.</li>
+<li><b>Scaling α/r.</b> Keeps the update size roughly stable when you change r, so you do not need to retune the learning rate. The assignment uses α = 2r (8/4 and 32/16), so α/r = 2 for both ranks.</li>
+<li><b>Merging.</b> W = W<sub>0</sub> + (α/r)BA is an ordinary dense matrix. Merged and unmerged outputs should match up to floating-point error.</li>
+<li><b>Parameter count.</b> r(d<sub>in</sub> + d<sub>out</sub>) per adapted matrix, so going from r = 4 to 16 multiplies adapter parameters by exactly 4, as the PDF says.</li>
+</ul>
+<h4>Where it shows up in the code</h4>
+<div class="code-map">
+  <div><code>common/lora.py:15</code><span><code>LoRALinear</code>: FP32 factors on a frozen FP16 base, kaiming-uniform A and zero B (lines 26–28), dropout on the input to the adapter path only.</span></div>
+  <div><code>common/lora.py:73</code><span><code>inject_adapters</code> wraps every <code>q,k,v,o,gate,up,down_proj</code> (Task 1) in deterministic order so the same seed gives the same A in LoRA-16 and OPLoRA-16.</span></div>
+  <div><code>common/lora.py:123</code><span><code>merge_factors_into</code> builds W<sub>0</sub> + (α/r)BA in a fresh backbone; <code>merge_export.py</code> compares merged and unmerged logits.</span></div>
+  <div><code>task2_vlm/train.py:40</code><span>Task 2 reuses the same class with r = 16, α = 32 on attention projections only, starting in Stage 2.</span></div>
+</div>
+<div class="qa"><h4>Check your understanding</h4><ul>
+<li>Why does a frozen backbone with an adapter still change behaviour on unrelated inputs? (Look at the activation ratio R(z) in Task 1, Step 6.)</li>
+<li>LoRA uses a 10× larger learning rate than Full FT here. Why does "same number of updates" not mean "same amount of change"?</li>
+</ul></div>
+</article>
+
+<article class="reading" id="l2sp">
+<header><span class="chip t1">Task 1</span><span class="chip opt">Optional</span><h3>Explicit Inductive Bias for Transfer Learning with Convolutional Networks (L2-SP)</h3></header>
+<p class="cite">Li, Grandvalet, Davoine · ICML 2018 · <a href="https://arxiv.org/abs/1802.01483">arXiv:1802.01483</a></p>
+<h4>What it covers</h4>
+<p>When fine-tuning, the pretrained weights are a better prior than zero. The paper compares several regularisers and finds that penalising the squared distance to the starting point (the "SP") is a simple, strong default.</p>
+<h4>Key ideas and equations</h4>
+<div class="eq">Ω(θ, θ<sub>0</sub>) = ½ Σ<sub>j=1</sub><sup>P</sup> (θ<sub>j</sub> − θ<sub>0,j</sub>)<sup>2</sup>, &nbsp; ∇<sub>θ</sub>[λΩ] = λ(θ − θ<sub>0</sub>)</div>
+<ul>
+<li>Ordinary weight decay pulls toward 0; L2-SP pulls toward θ<sub>0</sub>. A pretrained model is far from 0, so weight decay actively pushes away from what you want to keep.</li>
+<li>L2-SP does not restrict <em>which</em> parameters move, only how far in total. Compare that with LoRA, which restricts the shape of the change.</li>
+<li>Sum, do not average: with ~0.6B parameters, averaging would make λ = 10<sup>−3</sup> negligible. The PDF insists on the sum and on counting tied embeddings once.</li>
+</ul>
+<h4>Where it shows up in the code</h4>
+<div class="code-map">
+  <div><code>task1_finetune/train.py:193</code><span>Ω = 0.5·Σ(p − θ<sub>0</sub>)² in FP32 over unique parameters, added as λΩ once per optimizer update (on the last microbatch). Ω, λΩ and total loss are logged (line 203).</span></div>
+  <div><code>task1_finetune/train.py:102</code><span><code>displacement</code> computes ‖θ − θ<sub>0</sub>‖<sub>2</sub> for both Full FT runs; compare the final values.</span></div>
+  <div><code>common/lora.py:145</code><span><code>unique_named_parameters</code> makes sure the tied embedding is counted once.</span></div>
+  <div><code>configs/task1_ft.yaml:37</code><span><code>l2sp_lambda: 1.0e-3</code>.</span></div>
+</div>
+<div class="qa"><h4>Check your understanding</h4><ul>
+<li>The penalty is added to the loss, so its gradient goes through Adam's per-parameter scaling, unlike AdamW's decoupled weight decay. How might that weaken the pull on parameters with large gradient variance?</li>
+<li>Why must you plot SFT loss separately from the L2-SP total objective? (Hint: "What to Watch For", bullet 2.)</li>
+</ul></div>
+</article>
+
+<article class="reading" id="lessforget">
+<header><span class="chip t1">Task 1</span><span class="chip opt">Optional</span><h3>LoRA Learns Less and Forgets Less</h3></header>
+<p class="cite">Biderman et al. · TMLR 2024 · <a href="https://arxiv.org/abs/2405.09673">arXiv:2405.09673</a></p>
+<h4>What it covers</h4>
+<p>A careful comparison of LoRA and full fine-tuning on code and maths. LoRA usually reaches lower target-domain accuracy than full fine-tuning, but it also degrades the source-domain abilities less. The authors also find that full fine-tuning learns perturbations of much higher rank than typical LoRA settings.</p>
+<h4>How it relates to the assignment</h4>
+<ul>
+<li>This is exactly the trade-off in Research Questions 1–2: a method that "retains more but learns less may simply adapt weakly". Compare methods by their position on a gain-versus-retention plot, not by retention alone.</li>
+<li>The paper's spectral analysis is a natural companion to your ρ<sub>k</sub> and η = ‖ΔW‖<sub>F</sub>/‖W<sub>0</sub>‖<sub>F</sub> diagnostics.</li>
+</ul>
+<h4>Where it shows up in the code</h4>
+<div class="code-map">
+  <div><code>scripts/make_tables.py</code><span>Builds the seven-condition benchmark table with changes from baseline in percentage points.</span></div>
+  <div><code>task1_finetune/diagnostics.py:127–132</code><span>η and R(z) on math versus non-math probes, the local evidence for "does the math update fire on unrelated inputs".</span></div>
+</div>
+</article>
+
+<article class="reading" id="lmeval">
+<header><span class="chip t1">Task 1</span><span class="chip opt">Optional</span><h3>lm-evaluation-harness documentation</h3></header>
+<p class="cite">EleutherAI · <a href="https://github.com/EleutherAI/lm-evaluation-harness">github.com/EleutherAI/lm-evaluation-harness</a> · pinned to <code>lm_eval==0.4.8</code></p>
+<h4>Key ideas</h4>
+<ul>
+<li><b>Likelihood tasks</b> (HellaSwag, BoolQ, ARC-Easy): the model scores each candidate continuation by log-likelihood and picks the highest. <code>acc</code> uses raw log-likelihood; <code>acc_norm</code> divides by the continuation's length in bytes, which removes the bias toward short answers. Report both where available.</li>
+<li><b>Generation task</b> (<code>gsm8k_cot</code>): the model writes a solution, and a filter extracts the answer. "Flexible extraction" takes the last number in the output. A model can be right but unextractable, or truncated at 1,024 tokens, which is why you log both flags separately.</li>
+<li>Zero-shot, fixed task versions, complete splits, so every condition is comparable.</li>
+</ul>
+<h4>Where it shows up in the code</h4>
+<div class="code-map">
+  <div><code>task1_finetune/evaluate.py:52</code><span><code>run_gsm8k</code>: chat template with the empty think block, greedy, 1,024 tokens, per-example outputs with extracted answer and truncation flag.</span></div>
+  <div><code>task1_finetune/evaluate.py:92</code><span><code>run_likelihood</code>: stock prompts, no chat template, acc and acc_norm.</span></div>
+</div>
+</article>
+
+<!-- ============================== TASK 2 ============================== -->
+<h2 id="t2">Task 2 · Vision-language models and grounding</h2>
+<div class="task-intro t2">
+<p>The pipeline is frozen SigLIP → trainable MLP connector → Qwen3-0.6B with LoRA from Stage 2. Shapes: F(I) ∈ ℝ<sup>196×768</sup> becomes Z(I) = g<sub>φ</sub>(F(I)) ∈ ℝ<sup>196×1024</sup>, which is inserted as 196 "visual tokens" into the user turn. LLaVA explains the architecture and the staged training; VQA v2 explains how to test whether the image is actually used.</p>
+</div>
+
+<article class="reading" id="llava">
+<header><span class="chip t2">Task 2</span><span class="chip req">Required</span><h3>Visual Instruction Tuning (LLaVA)</h3></header>
+<p class="cite">Liu, Li, Wu, Lee · NeurIPS 2023 · <a href="https://arxiv.org/abs/2304.08485">arXiv:2304.08485</a> · focus on the architecture and the two-stage training procedure</p>
+<h4>What it covers</h4>
+<p>LLaVA connects a frozen CLIP vision encoder to an LLM with a small projection, then trains in two stages. Stage 1 (feature alignment) trains only the projection on image–caption pairs, so visual features land in the LLM's embedding space. Stage 2 (instruction tuning) trains the projection and the LLM on GPT-generated visual conversations. The follow-up LLaVA-1.5 replaced the linear projection with a two-layer MLP, which is the connector you use.</p>
+<h4>Key ideas and equations</h4>
+<div class="eq">H<sub>v</sub> = g<sub>φ</sub>(Z<sub>v</sub>), &nbsp; Z<sub>v</sub> = vision_encoder(X<sub>v</sub>)</div>
+<div class="eq">p(X<sub>a</sub> | X<sub>v</sub>, X<sub>instruct</sub>) = Π<sub>t</sub> p<sub>θ</sub>(x<sub>t</sub> | X<sub>v</sub>, X<sub>instruct</sub>, X<sub>a,&lt;t</sub>)</div>
+<p>Loss only on answer tokens; image tokens and instructions are masked. Your assignment's version averages per example first, then across the batch, so a 2-token answer counts as much as a 60-token caption:</p>
+<div class="eq">L = − (1/|B|) Σ<sub>i∈B</sub> (1/|R<sub>i</sub>|) Σ<sub>t∈R<sub>i</sub></sub> log p(y<sub>i,t</sub> | I<sub>i</sub>, q<sub>i</sub>, y<sub>i,&lt;t</sub>)</div>
+<div class="table-wrap"><table>
+<thead><tr><th>LLaVA</th><th>Your PA3 curriculum</th></tr></thead>
+<tbody>
+<tr><td>Stage 1: projection only, image–caption pairs</td><td>Stage 1 caption alignment, connector only, 2,250 updates, LR 10<sup>−3</sup></td></tr>
+<tr><td>Stage 2: projection + full LLM, instruction data</td><td>Stage 2 presence/counting + caption replay, connector + LoRA (r 16, attention only), 1,500 updates</td></tr>
+<tr><td>(no third stage)</td><td>Stage 3 natural VQAv2 + replay, 750 updates, lower LRs</td></tr>
+</tbody></table></div>
+<h4>Where it shows up in the code</h4>
+<div class="code-map">
+  <div><code>task2_vlm/model.py:18</code><span><code>Connector</code>: Linear 768→1024, GELU, Linear 1024→1024, times a fixed scale buffer.</span></div>
+  <div><code>task2_vlm/model.py:117</code><span><code>calibrate_scale</code>: s = mean ‖text embedding‖ / mean ‖initial connector output‖ on training data only. LLaVA does not do this; the PDF asks for it so visual tokens start at a magnitude Qwen is used to.</span></div>
+  <div><code>task2_vlm/model.py:65</code><span><code>build</code>: splices visual embeddings between the chat-template prefix and the question, builds labels (IGNORE on prefix, image and question), attention mask and position ids. Dropping the image rebuilds positions for the shorter sequence.</span></div>
+  <div><code>common/training.py:118</code><span><code>example_weighted_loss</code>: the per-example average above.</span></div>
+  <div><code>task2_vlm/train.py:168</code><span>Stage loop: fresh AdamW per stage, LoRA injected at Stage 2, separate LRs for connector and LoRA groups; <code>check_frozen</code> (line 84) asserts only connector and <code>lora_</code> params train.</span></div>
+  <div><code>task2_vlm/data.py:56</code><span><code>MixtureSampler</code>: seeded draws by stage probabilities, each draw = one pair or two captions.</span></div>
+</div>
+<div class="qa"><h4>Check your understanding</h4><ul>
+<li>The backbone is frozen, yet gradients must flow <em>through</em> it to reach the connector. Why would wrapping Qwen's forward pass in <code>torch.no_grad()</code> silently break Stage 1?</li>
+<li>Caption replay in Stages 2–3 is a forgetting countermeasure. Which Task 1 idea does it correspond to, and which does Task 1 forbid?</li>
+</ul></div>
+</article>
+
+<article class="reading" id="vqa2">
+<header><span class="chip t2">Task 2</span><span class="chip opt">Optional</span><h3>Making the V in VQA Matter: Elevating the Role of Image Understanding in Visual Question Answering</h3></header>
+<p class="cite">Goyal, Khot, Summers-Stay, Batra, Parikh · CVPR 2017 · <a href="https://arxiv.org/abs/1612.00837">arXiv:1612.00837</a></p>
+<h4>What it covers</h4>
+<p>VQA v1 models could score well by learning language priors, such as answering "yes" to "Is there a…?" or "2" to "How many…?". VQA v2 balances the data: for each (image, question), annotators found a similar image where the same question has a different answer. These complementary pairs make the question text alone insufficient, and models trained on the old data lose accuracy on the balanced set.</p>
+<h4>Key ideas</h4>
+<ul>
+<li><b>Language prior:</b> p(answer | question) learned without looking at the image.</li>
+<li><b>Complementary pair:</b> same question, two images, different answers. A blind model can get at most one of the two right if it gives the same answer to both.</li>
+<li><b>Pair accuracy</b> (both answers correct) is a far stricter grounding test than per-question accuracy.</li>
+</ul>
+<h4>How it maps to your evaluation</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Condition</th><th>What a grounded model does</th><th>What a prior-driven model does</th></tr></thead>
+<tbody>
+<tr><td>Correct image</td><td>Right answer</td><td>Right about half the time on balanced pairs</td></tr>
+<tr><td>Complementary swap</td><td>Gives the partner's answer, so it is "wrong" against the original reference</td><td>Same answer as before</td></tr>
+<tr><td>Mismatched image</td><td>Unrelated or wrong answer</td><td>Same answer as before</td></tr>
+<tr><td>No image</td><td>Degrades</td><td>Barely changes</td></tr>
+</tbody></table></div>
+<div class="eq">ΔNLL = NLL(y | q, I<sub>partner</sub>) − NLL(y | q, I<sub>correct</sub>) <span class="lbl">positive ⇒ the correct image makes the reference more likely</span></div>
+<h4>Where it shows up in the code</h4>
+<div class="code-map">
+  <div><code>scripts/prepare_data_task2.py</code><span>Selects VQAv2 complementary pairs whose consensus answers differ with ≥ 8/10 agreement, and generates presence/counting pairs from COCO annotations (excluding crowd and tiny instances).</span></div>
+  <div><code>task2_vlm/evaluate_dev.py</code><span>Teacher-forced reference NLL under correct, complementary and no-image inputs; image-swap penalty ΔNLL.</span></div>
+  <div><code>task2_vlm/evaluate_final.py:59</code><span><code>pair_table</code>: pair accuracy, identical-answer rate, empty-answer rate. Bootstrap over complete pairs at line 101.</span></div>
+  <div><code>ids/task2_mismatch_map.json</code><span>The fixed derangement for the mismatched condition.</span></div>
+</div>
+<div class="qa"><h4>Check your understanding</h4><ul>
+<li>A swapped-image answer that differs from the original can be "image sensitive" without being correct. Which metric separates following the partner image from just producing something different?</li>
+<li>Why does the no-image control confound image removal with a shorter prefix, and why does the complementary swap avoid this?</li>
+</ul></div>
+</article>
+
+<article class="reading" id="siglip">
+<header><span class="chip t2">Task 2</span><span class="chip opt">Optional</span><h3>Sigmoid Loss for Language Image Pre-Training (SigLIP)</h3></header>
+<p class="cite">Zhai, Mustafa, Kolesnikov, Beyer · ICCV 2023 · <a href="https://arxiv.org/abs/2303.15343">arXiv:2303.15343</a></p>
+<h4>What it covers</h4>
+<p>CLIP-style image–text pretraining with a pairwise sigmoid loss instead of a batch softmax. Each image–text pair is treated as an independent binary classification, so the loss does not need a global normalisation over the batch.</p>
+<div class="eq">L = − (1/|B|) Σ<sub>i</sub> Σ<sub>j</sub> log σ( z<sub>ij</sub> · (t·x<sub>i</sub>·y<sub>j</sub> + b) ), &nbsp; z<sub>ij</sub> = +1 if i = j, else −1</div>
+<h4>Why it matters here</h4>
+<ul>
+<li>Your encoder <code>google/siglip-base-patch16-224</code> splits a 224×224 image into 16×16 patches: 14 × 14 = 196 patch features of width 768.</li>
+<li>You use the per-patch <code>last_hidden_state</code> (after the final LayerNorm, applied once), not the pooled embedding that the contrastive loss was trained on. The patches keep spatial layout, which counting and presence questions need.</li>
+<li>The optional 49-token run averages 2×2 blocks of the 14×14 grid: 4× fewer visual tokens, at the risk of blurring small objects.</li>
+</ul>
+<h4>Where it shows up in the code</h4>
+<div class="code-map">
+  <div><code>task2_vlm/cache_features.py</code><span>Deterministic preprocessing, FP16 cache of 196×768 features, encoder freed before training.</span></div>
+  <div><code>task2_vlm/model.py:47</code><span><code>visual_tokens</code>, including the 2×2 average pool for <code>configs/task2_vlm49.yaml</code>.</span></div>
+</div>
+</article>
+
+<article class="reading" id="vqaeval">
+<header><span class="chip t2">Task 2</span><span class="chip opt">Optional</span><h3>VQA answer normalisation and scoring code</h3></header>
+<p class="cite">Official VQA evaluation code, <a href="https://github.com/GT-Vision-Lab/VQA">GT-Vision-Lab/VQA</a> (<code>vqaEval.py</code>)</p>
+<h4>Key ideas</h4>
+<ul>
+<li>Normalise before comparing: lower-case, strip punctuation (carefully, so "3.5" survives), number words to digits, drop articles, expand contractions.</li>
+<li>Soft consensus accuracy: an answer is fully right if at least 3 of the other 9 annotators gave it, averaged over the 10 leave-one-out subsets.</li>
+</ul>
+<div class="eq">s(â) = (1/10) Σ<sub>i=1</sub><sup>10</sup> min( 1, (1/3) Σ<sub>j≠i</sub> 1[â = a<sub>j</sub>] )</div>
+<h4>Where it shows up in the code</h4>
+<div class="code-map">
+  <div><code>task2_vlm/vqa_norm.py:49</code><span><code>normalize_answer</code>, used for training targets, consensus selection and scoring alike.</span></div>
+  <div><code>task2_vlm/vqa_norm.py:56</code><span><code>soft_accuracy</code>, the equation above.</span></div>
+</div>
+</article>
+
+<!-- ============================== TASK 3 ============================== -->
+<h2 id="t3">Task 3 · Test-time compute</h2>
+<div class="task-intro t3">
+<p>You have 32 rollouts per question. Each method is a pair: a <b>quality score</b> per rollout (none, mean log-prob L<sub>i</sub>, self-certainty K<sub>i</sub>, vision V<sub>i</sub>, VisConf Z<sub>i</sub>) and an <b>aggregation rule</b> (take the top score, majority vote, or rank-weighted vote). Holding one fixed while changing the other is the core controlled comparison. Oracle coverage, the chance that any of N candidates is correct, is the ceiling for every selector.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Score ↓ / Aggregation →</th><th>Highest score</th><th>One vote each</th><th>Rank-weighted (RWC)</th></tr></thead>
+<tbody>
+<tr><td>none</td><td>FirstAns</td><td>Self-consistency</td><td>n/a</td></tr>
+<tr><td>Mean log-prob L<sub>i</sub></td><td>max_L</td><td>n/a</td><td>n/a</td></tr>
+<tr><td>Self-certainty K<sub>i</sub></td><td>max_K</td><td>n/a</td><td>K_rwc</td></tr>
+<tr><td>Vision V<sub>i</sub> (MathVista)</td><td>max_V</td><td>n/a</td><td>V_rwc</td></tr>
+<tr><td>VisConf Z<sub>i</sub> (MathVista)</td><td>max_Z</td><td>n/a</td><td>Z_rwc</td></tr>
+<tr><td>Tokenwise Z<sub>i</sub><sup>token</sup> (ablation)</td><td>max_Ztok</td><td>n/a</td><td>Ztok_rwc</td></tr>
+</tbody></table></div>
+<p class="note">Method names match the keys in <code>task3_ttc/selection.py:99–100</code>, which is what you will see in the result files.</p>
+</div>
+
+<article class="reading" id="selfcert">
+<header><span class="chip t3">Task 3</span><span class="chip req">Required</span><h3>Scalable Best-of-N Selection for Large Language Models via Self-Certainty</h3></header>
+<p class="cite">Kang, Zhao, Song · NeurIPS 2025 · <a href="https://arxiv.org/abs/2502.18581">arXiv:2502.18581</a> · focus on the self-certainty definition and Borda voting</p>
+<h4>What it covers</h4>
+<p>A reward-model-free way to score a sampled response: measure how far each next-token distribution is from uniform, and average over the response. Peaked distributions mean the model was confident. The paper shows this scales better with N than perplexity or entropy, is less biased toward long responses, and combined with voting it beats plain self-consistency.</p>
+<h4>Key ideas and equations</h4>
+<div class="eq">Self-certainty(y) = − (1/(nV)) Σ<sub>i=1</sub><sup>n</sup> Σ<sub>j=1</sub><sup>V</sup> log( V · p(j | x, y<sub>&lt;i</sub>) ) = (1/n) Σ<sub>i</sub> KL(U ‖ p<sub>i</sub>)</div>
+<p>In the assignment's notation, with k<sub>i,t</sub> read from the supplied <code>kl_u_p</code> column:</p>
+<div class="eq">K<sub>i</sub> = (1/T<sub>i</sub>) Σ<sub>t</sub> D<sub>KL</sub>(U ‖ p<sub>i,t</sub>), &nbsp; L<sub>i</sub> = (1/T<sub>i</sub>) Σ<sub>t</sub> log p<sub>i,t</sub>(y<sub>i,t</sub>)</div>
+<ul>
+<li><b>K vs L.</b> L<sub>i</sub> only looks at the probability of the token that was sampled; K<sub>i</sub> summarises the whole distribution at each step. KL(U‖p) heavily penalises putting near-zero mass anywhere, so it is not the same as entropy.</li>
+<li><b>Borda voting.</b> Rank responses by self-certainty, give rank r the vote (N − r + 1)<sup>p</sup>, sum votes per answer. p = 0 is majority voting; large p approaches "pick the top score".</li>
+<li>The assignment's RWC is the linear case rescaled to [0, 1]: w<sub>i</sub> = (N − r<sub>i</sub>)/(N − 1), so the worst-ranked rollout gets zero vote.</li>
+<li>Self-certainty alone loses to self-consistency on math with definite answers; the combination wins. Expect the same pattern in your MATH results.</li>
+</ul>
+<h4>Where it shows up in the code</h4>
+<div class="code-map">
+  <div><code>task3_ttc/data.py:125</code><span>L<sub>i</sub> and K<sub>i</sub> as token means of <code>logp</code> and <code>kl_u_p</code> for each rollout.</span></div>
+  <div><code>task3_ttc/selection.py:44</code><span><code>rwc_weights</code>: descending average ranks, w = (N − r)/(N − 1). <code>select_rwc</code> (line 58) sums them per answer group.</span></div>
+  <div><code>task3_ttc/signals.py:39</code><span><code>quartile_gap</code>: top-quartile minus bottom-quartile correctness within a question, for the "what do the signals capture" analysis, plus the shortest-rollout control.</span></div>
+</div>
+<div class="qa"><h4>Check your understanding</h4><ul>
+<li>K<sub>i</sub> is "divergence from uniform", not a probability of correctness. Why can a confidently wrong rollout score high?</li>
+<li>If longer rollouts tend to be wrong on MATH, which of L<sub>i</sub>, K<sub>i</sub> and shortest-length would benefit? This is why the length control is required.</li>
+</ul></div>
+</article>
+
+<article class="reading" id="visconf">
+<header><span class="chip t3">Task 3</span><span class="chip req">Required</span><h3>VisConf: Quality-Aware Consensus for Best-of-N in Vision-Language Model Reasoning</h3></header>
+<p class="cite">Usman et al. · read §3–5 (calibration, fusion, RWC) · I could not find a public copy, so this section is built from the assignment's own description; check it against the PDF your instructor provided.</p>
+<h4>What it covers</h4>
+<p>For a VLM, confidence alone can reward fluent reasoning that ignores the image. VisConf multiplies a calibrated confidence by a visual engagement score (how much attention goes to image tokens), then uses rank-weighted consensus so that answer agreement still matters.</p>
+<h4>Key ideas and equations</h4>
+<p><b>Visual engagement</b>, normalised over the three attention groups because the raw totals need not sum to one:</p>
+<div class="eq">v<sub>i,t</sub> = A<sub>i,t</sub><sup>image</sup> / (A<sub>i,t</sub><sup>image</sup> + A<sub>i,t</sub><sup>prompt</sup> + A<sub>i,t</sub><sup>generated</sup>), &nbsp; V<sub>i</sub> = (1/T<sub>i</sub>) Σ<sub>t</sub> v<sub>i,t</sub></div>
+<p><b>Candidate-calibrated confidence.</b> Pool every token KL in the current candidate set G and squash with its 5th/95th percentiles, so confidence is relative to the other candidates for this question:</p>
+<div class="eq">c<sub>i,t</sub> = clip<sub>[0,1]</sub>( (k<sub>i,t</sub> − Q<sub>.05</sub>(G)) / max(Q<sub>.95</sub>(G) − Q<sub>.05</sub>(G), 10<sup>−8</sup>) ), &nbsp; C<sub>i</sub> = (1/T<sub>i</sub>) Σ<sub>t</sub> c<sub>i,t</sub></div>
+<p><b>Rollout-level fusion</b> and its tokenwise ablation, which differ by exactly the within-rollout covariance:</p>
+<div class="eq">Z<sub>i</sub> = V<sub>i</sub>C<sub>i</sub>, &nbsp; Z<sub>i</sub><sup>token</sup> = (1/T<sub>i</sub>) Σ<sub>t</sub> c<sub>i,t</sub>v<sub>i,t</sub>, &nbsp; Z<sub>i</sub><sup>token</sup> − Z<sub>i</sub> = Cov<sub>t</sub>(c<sub>i,t</sub>, v<sub>i,t</sub>)</div>
+<p><b>RWC</b> with average ranks r<sub>i</sub> (1 = best):</p>
+<div class="eq">w<sub>i</sub> = (N − r<sub>i</sub>)/(N − 1), &nbsp; W(a) = Σ<sub>i: a<sub>i</sub>=a</sub> w<sub>i</sub>, &nbsp; â = argmax<sub>a</sub> W(a)</div>
+<ul>
+<li>Calibration must be recomputed on every prefix. Using all 32 rollouts to calibrate a selection at N = 4 leaks unseen candidates.</li>
+<li>If confidence and vision are uncorrelated within a rollout, tokenwise and rollout-level fusion should rank candidates almost identically. That is the hypothesis your ablation tests.</li>
+</ul>
+<h4>Where it shows up in the code</h4>
+<div class="code-map">
+  <div><code>task3_ttc/data.py:131</code><span>Per-token v<sub>i,t</sub> from the three attention groups.</span></div>
+  <div><code>task3_ttc/selection.py:75</code><span><code>visconf_scores</code>: pooled linear-interpolation percentiles over the current prefix, then C, V, Z and Z<sup>token</sup>.</span></div>
+  <div><code>task3_ttc/selection.py:103</code><span><code>run_methods</code>: applies every score × aggregation pair to one revealed prefix.</span></div>
+  <div><code>task3_ttc/signals.py:70–72</code><span>Within-rollout confidence–vision Pearson correlation, and a numerical check that Z<sup>token</sup> − Z equals the covariance.</span></div>
+</div>
+</article>
+
+<article class="reading" id="selfcons">
+<header><span class="chip t3">Task 3</span><span class="chip opt">Optional</span><h3>Self-Consistency Improves Chain of Thought Reasoning in Language Models</h3></header>
+<p class="cite">Wang et al. · ICLR 2023 · <a href="https://arxiv.org/abs/2203.11171">arXiv:2203.11171</a></p>
+<h4>What it covers</h4>
+<p>Instead of one greedy chain of thought, sample many reasoning paths and return the most common final answer. Different correct paths tend to converge on the same answer, while errors scatter.</p>
+<div class="eq">â = argmax<sub>a</sub> Σ<sub>i=1</sub><sup>N</sup> 1[a<sub>i</sub> = a]</div>
+<ul>
+<li>Works only when answers can be grouped, so answer equivalence (math-verify for MATH, MathVista's normalisation rules) directly changes the vote.</li>
+<li>Missing extractions all fall into one NO_ANSWER group that can win the vote and is always graded wrong. Keep it; removing it would inflate scores.</li>
+</ul>
+<h4>Where it shows up in the code</h4>
+<div class="code-map">
+  <div><code>task3_ttc/selection.py:37</code><span><code>select_sc</code>, ties to the earliest supporting rollout.</span></div>
+  <div><code>task3_ttc/answers.py:198</code><span><code>group_prefix</code>: greedy grouping of a revealed prefix with a precomputed equivalence matrix (line 171), never using gold.</span></div>
+  <div><code>task3_ttc/offline_eval.py:34</code><span>FirstAns, oracle coverage, distinct answer groups and the sampling-vs-selection failure split for N ∈ {1,…,32} over 10 orders.</span></div>
+</div>
+</article>
+
+<article class="reading" id="selfrefine">
+<header><span class="chip t3">Task 3</span><span class="chip opt">Optional</span><h3>Self-Refine: Iterative Refinement with Self-Feedback</h3></header>
+<p class="cite">Madaan et al. · NeurIPS 2023 · <a href="https://arxiv.org/abs/2303.17651">arXiv:2303.17651</a></p>
+<h4>What it covers</h4>
+<p>The same model produces an output, critiques it, and revises it, repeated until a stop condition. No extra training or external feedback. Gains are large on tasks with soft quality criteria, and much smaller on maths, where the model often cannot spot its own error.</p>
+<h4>How it maps to Step 4</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Strategy</th><th>Calls</th><th>Output allowance</th><th>Spends compute on</th></tr></thead>
+<tbody>
+<tr><td>Single longer response</td><td class="n">1</td><td class="n">3,072</td><td>Depth in one chain</td></tr>
+<tr><td>Parallel + self-consistency</td><td class="n">3</td><td class="n">3 × 1,024</td><td>Independent exploration</td></tr>
+<tr><td>Sequential refinement</td><td class="n">2</td><td class="n">1,024 + 2,048</td><td>Reconsidering one answer (one Self-Refine round)</td></tr>
+</tbody></table></div>
+<ul>
+<li>Track wrong→correct and correct→wrong transitions; refinement can break correct answers as well as fix wrong ones.</li>
+<li>The revision prompt contains the whole first response, so its input cost is higher. Count it.</li>
+</ul>
+<h4>Where it shows up in the code</h4>
+<div class="code-map">
+  <div><code>task3_ttc/live_generation.py:95–111</code><span>Single, parallel (×3), and refinement that reuses parallel response #1 as its initial answer; per-call seeds hash (6304, question, strategy, call).</span></div>
+  <div><code>task3_ttc/live_generation.py:145</code><span>Initial vs revised correctness for the transition counts.</span></div>
+</div>
+</article>
+
+<article class="reading" id="adaptive">
+<header><span class="chip t3">Task 3</span><span class="chip opt">Optional</span><h3>Let's Sample Step by Step: Adaptive-Consistency for Efficient Reasoning and Coding with LLMs</h3></header>
+<p class="cite">Aggarwal, Madaan, Yang, Mausam · EMNLP 2023 · <a href="https://arxiv.org/abs/2305.11860">arXiv:2305.11860</a></p>
+<h4>What it covers</h4>
+<p>Most questions do not need all N samples: once the vote is lopsided, more samples rarely change the winner. Adaptive-Consistency samples one at a time and stops when a statistical criterion (for example, a Dirichlet/Beta posterior that the current majority stays the majority) passes a threshold. It cuts samples substantially with little accuracy loss.</p>
+<h4>How your version differs</h4>
+<ul>
+<li>You check only at n ∈ {4, 8, 16}, then stop at 32, and use simple thresholds: majority fraction ≥ τ (agreement controller), plus SC = RWC winner and RWC margin ≥ γ (quality-aware controller).</li>
+<li>τ and γ are chosen on the dev split by the cheapest setting within 1 pp of fixed-32 SC, then frozen for held-out. That is a cost-constrained model-selection rule, and choosing on held-out data would be leakage.</li>
+</ul>
+<div class="eq">margin = (W<sub>(1)</sub> − W<sub>(2)</sub>) / Σ<sub>a</sub> W(a) <span class="lbl">W<sub>(2)</sub> = 0 if only one answer group</span></div>
+<h4>Where it shows up in the code</h4>
+<div class="code-map">
+  <div><code>task3_ttc/selection.py:64</code><span><code>rwc_margin</code>.</span></div>
+  <div><code>task3_ttc/adaptive.py:77</code><span><code>simulate</code>: stopping decision per (question, order) from revealed candidates only.</span></div>
+  <div><code>task3_ttc/adaptive.py:105</code><span><code>select_setting</code>: the dev-split rule with ties broken by accuracy, then smaller τ and γ.</span></div>
+</div>
+</article>
+
+<article class="reading" id="tot">
+<header><span class="chip t3">Task 3</span><span class="chip opt">Optional</span><h3>Tree of Thoughts: Deliberate Problem Solving with Large Language Models</h3></header>
+<p class="cite">Yao et al. · NeurIPS 2023 · <a href="https://arxiv.org/abs/2305.10601">arXiv:2305.10601</a></p>
+<p>Generalises chain of thought to a search tree: generate several candidate "thoughts" per step, have the model evaluate partial states, and expand with BFS or DFS with backtracking. It is the "search methods combine branching with intermediate evaluation" sentence in the Task 3 introduction. Not implemented in PA3; use it to place parallel sampling (branching with no intermediate evaluation) and refinement (no branching) on a spectrum in your discussion.</p>
+</article>
+
+<article class="reading" id="prm">
+<header><span class="chip t3">Task 3</span><span class="chip opt">Optional</span><h3>Let's Verify Step by Step</h3></header>
+<p class="cite">Lightman et al. · ICLR 2024 · <a href="https://arxiv.org/abs/2305.20050">arXiv:2305.20050</a></p>
+<p>Compares an outcome reward model (scores the finished solution) with a process reward model (scores each step), trained on the PRM800K step labels. Best-of-N with the process verifier solves clearly more MATH problems than with the outcome verifier or majority voting. This is the source of the outcome/process verifier terms in the Task 3 introduction. Your methods use no trained verifier; self-certainty and VisConf are internal signals that stand in for one, so this paper is the natural reference point when you discuss what a learned verifier might add.</p>
+</article>
+
+<!-- ============================== SHARED ============================== -->
+<section id="shared">
+<h2>Methods used everywhere</h2>
+<p>These are not readings, but they appear in all three tasks and in the report requirements.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Concept</th><th>Used in</th><th>Code</th></tr></thead>
+<tbody>
+<tr><td>Response-only label masking (prompt and padding ignored, end-of-turn supervised)</td><td><span class="chip t1">T1</span> <span class="chip t2">T2</span></td><td><code>common/chat.py:36</code></td></tr>
+<tr><td>Token-weighted loss over the effective batch (Task 1) vs example-weighted (Task 2)</td><td><span class="chip t1">T1</span> <span class="chip t2">T2</span></td><td><code>common/training.py:111</code>, <code>:118</code></td></tr>
+<tr><td>Loss computed only at supervised positions, in FP32</td><td><span class="chip t1">T1</span> <span class="chip t2">T2</span></td><td><code>common/training.py:95</code></td></tr>
+<tr><td>FP16 autocast, dynamic loss scaling, unscale → clip 1.0 → step, skipped-update logging</td><td><span class="chip t1">T1</span> <span class="chip t2">T2</span></td><td><code>common/training.py:52</code></td></tr>
+<tr><td>Weight decay only on ≥2-D non-bias params; cosine schedule with warmup</td><td><span class="chip t1">T1</span> <span class="chip t2">T2</span></td><td><code>common/training.py:16</code>, <code>:35</code></td></tr>
+<tr><td>Paired bootstrap over the right unit (pairs in T2, questions in T3)</td><td><span class="chip t2">T2</span> <span class="chip t3">T3</span></td><td><code>common/metrics.py:30</code>, <code>:38</code></td></tr>
+<tr><td>Seeds, saved IDs and resumable checkpoints</td><td>all</td><td><code>common/seeding.py</code>, <code>common/training.py:129</code>, <code>ids/</code></td></tr>
+</tbody></table></div>
+<p class="note">Reminder from the PDF: the report must be written without generative AI. This page is for understanding the material; the interpretation in your report needs to be your own.</p>
+</section>
+</main>
+</div>
