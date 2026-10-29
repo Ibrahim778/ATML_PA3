@@ -1,0 +1,72 @@
+{
+  "method": "lora16",
+  "config": {
+    "train": {
+      "num_updates": 1250,
+      "micro_batch": 2,
+      "grad_accum": 16,
+      "warmup_updates": 38,
+      "betas": [
+        0.9,
+        0.999
+      ],
+      "eps": 1e-08,
+      "weight_decay": 0.01,
+      "clip_norm": 1.0,
+      "amp_dtype": "float16",
+      "gradient_checkpointing": true,
+      "compile": false,
+      "checkpoint_updates": [
+        312,
+        625,
+        937,
+        1250
+      ],
+      "log_every": 1
+    },
+    "method": {
+      "kind": "lora",
+      "lr": 0.0002,
+      "r": 16,
+      "alpha": 32,
+      "dropout": 0.05,
+      "targets": [
+        "q_proj",
+        "k_proj",
+        "v_proj",
+        "o_proj",
+        "gate_proj",
+        "up_proj",
+        "down_proj"
+      ]
+    }
+  },
+  "device": "cuda",
+  "preprocess_s": 0.006898164749145508,
+  "params": {
+    "total": 606142464,
+    "trainable": 10092544
+  },
+  "export_s": {
+    "312": 0.019990205764770508,
+    "625": 0.019399642944335938,
+    "937": 0.013073444366455078,
+    "1250": 0.012975454330444336
+  },
+  "checkpoint_bytes": {
+    "312": 40412951,
+    "625": 40412951,
+    "937": 40412951,
+    "1250": 40412951
+  },
+  "peak_mem_gb": 4.805050373077393,
+  "skipped_updates": 0,
+  "checkpoint_bytes_with_resume": {
+    "312": 162002396,
+    "625": 162002460,
+    "937": 162002524,
+    "1250": 162002588
+  },
+  "updates_done": 1250,
+  "train_time_s": 2097.3496306037996
+}

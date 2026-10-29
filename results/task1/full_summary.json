@@ -1,0 +1,65 @@
+{
+  "method": "full",
+  "config": {
+    "train": {
+      "num_updates": 1250,
+      "micro_batch": 2,
+      "grad_accum": 16,
+      "warmup_updates": 38,
+      "betas": [
+        0.9,
+        0.999
+      ],
+      "eps": 1e-08,
+      "weight_decay": 0.01,
+      "clip_norm": 1.0,
+      "amp_dtype": "float16",
+      "gradient_checkpointing": true,
+      "compile": false,
+      "checkpoint_updates": [
+        312,
+        625,
+        937,
+        1250
+      ],
+      "log_every": 1
+    },
+    "method": {
+      "kind": "full",
+      "lr": 2e-05,
+      "l2sp_lambda": 0.0
+    }
+  },
+  "device": "cuda",
+  "params": {
+    "total": 596049920,
+    "trainable": 596049920
+  },
+  "export_s": {
+    "312": 0.5480542182922363,
+    "625": 0.5576791763305664,
+    "937": 0.5464060306549072,
+    "1250": 0.5382287502288818
+  },
+  "displacement_l2": {
+    "312": 7.646457715129593,
+    "625": 10.04050527731483,
+    "937": 10.625472971004019,
+    "1250": 10.678624193882879
+  },
+  "checkpoint_bytes": {
+    "312": 1552478215,
+    "625": 1552478215,
+    "937": 1552478215,
+    "1250": 1552478215
+  },
+  "peak_mem_gb": 12.957057476043701,
+  "skipped_updates": 0,
+  "checkpoint_bytes_with_resume": {
+    "625": 8705496000,
+    "937": 8705496128,
+    "1250": 8705496192
+  },
+  "updates_done": 1250,
+  "train_time_s": 1495.5703960200772
+}

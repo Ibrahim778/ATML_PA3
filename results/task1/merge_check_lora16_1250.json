@@ -1,0 +1,12 @@
+{
+  "condition": "lora16_1250",
+  "n_merged_modules": 196,
+  "max_abs_logit_diff_fp32": 8.153915405273438e-05,
+  "argmax_agreement": 1.0,
+  "tolerance": 0.01,
+  "passed": true,
+  "merge_s": 0.6432106494903564,
+  "export_s": 0.3086209297180176,
+  "merged_bytes": 1203564093,
+  "adapter_bytes": 40412728
+}
