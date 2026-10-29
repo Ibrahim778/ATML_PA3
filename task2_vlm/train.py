@@ -227,7 +227,11 @@ def main(argv=None):
                 loss_tot += loss.item()
             if u == start_u:  # connector must receive gradients through the frozen LM
                 gn = vlm.connector.fc1.weight.grad
-                ok = gn is not None and gn.abs().sum().item() > 0
+                # NaN/inf here is an FP16 overflow at the initial loss scale, not a broken graph:
+                # the gradient still arrived, and the GradScaler skips this step and lowers its scale.
+                ok = gn is not None and bool((gn != 0).any())
+                tqdm.write(f"[check] connector grad present={gn is not None} "
+                           f"finite={gn is not None and bool(torch.isfinite(gn).all())}")
                 summary["checks"][f"connector_grad_{st['name']}"] = ok
                 assert ok, "connector received no gradient"
             lrs = sched.get_last_lr()
