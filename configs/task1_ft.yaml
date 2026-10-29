@@ -71,7 +71,7 @@ conditions:
 
 eval:
   dtype: float16
-  batch_size: 128          # likelihood tasks
+  batch_size: 128          # likelihood tasks (overridable per task below)
   gen_batch_size: 128      # gsm8k_cot generation
   gsm8k:
     task: gsm8k_cot
@@ -82,7 +82,9 @@ eval:
     primary_filter: flexible-extract
   likelihood_tasks:
     hellaswag: {metric: acc_norm, raw_metric: acc}
-    boolq: {metric: acc, raw_metric: acc}
+    # BoolQ passages are long and lm-eval takes an FP32 log-softmax over the full 152k vocabulary for
+    # every position of the batch (~batch x length x 152k x 4 bytes), so it needs a smaller batch.
+    boolq: {metric: acc, raw_metric: acc, batch_size: 16}
     arc_easy: {metric: acc_norm, raw_metric: acc}
   merge_check_tol: 1.0e-2     # max |merged - unmerged| logit diff (FP32)
 

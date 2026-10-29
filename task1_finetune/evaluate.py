@@ -134,8 +134,9 @@ def main():
             lm = make_lm(path, cfg, cfg["eval"]["gen_batch_size"], device)
             agg, rows = run_gsm8k(lm, cfg, tok)
         else:
-            lm = make_lm(path, cfg, cfg["eval"]["batch_size"], device)
-            agg, rows = run_likelihood(lm, cfg, t, cfg["eval"]["likelihood_tasks"][t])
+            spec = cfg["eval"]["likelihood_tasks"][t]
+            lm = make_lm(path, cfg, spec.get("batch_size", cfg["eval"]["batch_size"]), device)
+            agg, rows = run_likelihood(lm, cfg, t, spec)
         del lm
         write_jsonl(rows, rd / f"{args.condition}_per_example_{t}.jsonl")
         agg_all.setdefault("benchmarks", {})[t] = agg
