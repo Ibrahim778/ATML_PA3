@@ -46,9 +46,13 @@ def _json(path):
 
 
 def t1_trained(m):
+    """Finished = summary reached the last update AND the final weights are still on disk
+    (results/ can be restored from git while outputs/ is gone)."""
     def f():
         s = _json(f"{R1}/{m}_summary.json")
-        return bool(s) and s.get("updates_done", 0) >= load_yaml(C1)["train"]["num_updates"]
+        n = load_yaml(C1)["train"]["num_updates"]
+        final = f"outputs/task1/{m}/ckpt_{n}/" + ("model" if m in ("full", "l2sp") else "adapter.safetensors")
+        return bool(s) and s.get("updates_done", 0) >= n and os.path.exists(repo_path(final))
     return f
 
 
@@ -68,7 +72,8 @@ def stages(task, cfg2=C2):
             [Step(f"train_{m}", "task1_finetune.train", ["--config", C1, "--method", m], t1_trained(m), gpu=True, fresh=True)
              for m in METHODS],
             [Step(f"merge_{c}", "task1_finetune.merge_export", ["--config", C1, "--conditions", c],
-                  exists(f"{R1}/merge_check_{c}.json")) for c in ADAPTER_CONDS],
+                  lambda c=c: exists(f"{R1}/merge_check_{c}.json")() and exists(f"outputs/task1/merged/{c}")())
+             for c in ADAPTER_CONDS],
             [Step("eval_data", "task1_finetune.evaluate:warm_datasets", [], lambda: False)],
             [Step(f"eval_{c}", "task1_finetune.evaluate", ["--config", C1, "--condition", c], t1_evaluated(c),
                   gpu=True, fresh=True) for c in CONDITIONS],
