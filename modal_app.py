@@ -128,7 +128,7 @@ def orchestrate(task: int, force: bool = False, gpu: str = DEFAULT_GPU, config2:
 
 # Default mode: the whole task, step after step, in ONE GPU container (one GPU billed at a time).
 # CPU steps (data prep, merges) simply run in the same container.
-@app.function(gpu=DEFAULT_GPU, cpu=16, memory=32768, timeout=24 * 3600, volumes={VOL: vol},
+@app.function(gpu=DEFAULT_GPU, cpu=8, memory=32768, timeout=24 * 3600, volumes={VOL: vol},
               retries=RETRIES, single_use_containers=True)
 def run_task(task: int, force: bool = False, config2: str = "configs/task2_vlm.yaml"):
     _setup()
