@@ -100,6 +100,16 @@ python -m task3_ttc.adaptive --config configs/task3_ttc.yaml
 python -m task3_ttc.live_generation --config configs/task3_ttc.yaml     # GPU; resumable per question
 ```
 
+### Running on Modal
+`modal_app.py` runs any task on a Modal GPU, with `outputs/`, `results/`, `ids/`, `data/` and the
+Hugging Face cache on a persistent Modal Volume, so skip/resume works across calls:
+```bash
+pip install modal && modal setup
+modal run --detach modal_app.py --task 1            # --force to start over, --gpu A100-80GB etc.
+modal volume get atml-pa3 ATML_PA3/results results  # fetch results
+```
+Upload inputs with `modal volume put atml-pa3 <local> ATML_PA3/data/<path>`.
+
 ### Re-running and starting over
 The `run_task*.sh` scripts skip every step whose output already exists, and unfinished training resumes
 from its newest checkpoint. `FORCE=1 ./run_taskN.sh` reruns every step from scratch: training discards
