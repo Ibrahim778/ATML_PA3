@@ -86,11 +86,10 @@ def run(task: int = 1, force: bool = False):
     if force:
         # A preempted call is restarted on the same input; only the first attempt may wipe
         # progress, later attempts must resume from the synced checkpoints.
-        marker = f"{VOL_WORK}/logs/.force_{modal.current_function_call_id()}"
+        marker = f"{VOL_PATH}/.force_{modal.current_function_call_id()}"   # outside the synced dirs
         if os.path.exists(marker):
             print("[modal] restarted after preemption: resuming instead of --force", flush=True)
         else:
-            os.makedirs(os.path.dirname(marker), exist_ok=True)
             open(marker, "w").close()
             vol.commit()
             env["FORCE"] = "1"
