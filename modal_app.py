@@ -31,7 +31,9 @@ vol = modal.Volume.from_name(APP, create_if_missing=True)
 app = modal.App(APP, image=image)
 
 
-@app.function(gpu="H100", timeout=24 * 3600, volumes={VOL_PATH: vol})
+# Explicit CPU/RAM reservation: Full FT keeps an FP32 copy of the starting weights on the host and
+# merge/diagnostics load FP32 models, so the small default request is not enough.
+@app.function(gpu="H100", cpu=8, memory=32768, timeout=24 * 3600, volumes={VOL_PATH: vol})
 def run(task: int = 1, force: bool = False):
     import os
     import subprocess
