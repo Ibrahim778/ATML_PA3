@@ -64,7 +64,8 @@ def sc_pick(answers):
     gid = A.group_prefix(np.arange(len(keys)), E)
     votes = np.bincount(gid)
     g = int(np.flatnonzero(votes == votes.max())[0])
-    return keys[int(np.flatnonzero(gid == g)[0])]
+    pick = keys[int(np.flatnonzero(gid == g)[0])]
+    return None if pick == A.NO_ANSWER else pick   # missing-answer group won: no answer (not "extracted")
 
 
 def main():
