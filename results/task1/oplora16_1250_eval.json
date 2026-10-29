@@ -1,0 +1,48 @@
+{
+  "condition": "oplora16_1250",
+  "model_path": "/workspace/ATML_PA3/outputs/task1/merged/oplora16_1250",
+  "lm_eval_version": "0.4.13",
+  "transformers_version": "5.21.0",
+  "benchmarks": {
+    "gsm8k": {
+      "primary": 0.623199393479909,
+      "primary_stderr": 0.01334785875782916,
+      "strict_match": 0.0,
+      "n": 1319,
+      "truncation_rate": 0.006065200909780136,
+      "unextractable_rate": 0.0,
+      "mean_response_tokens": 139.73919636087945,
+      "example_prompt": "<|im_start|>user\nQ: Janet\u2019s ducks lay 16 eggs per day. She eats three for breakfast every morning and bakes muffins for her friends every day with four. She sells the remainder at the farmers' market daily for $2 per fresh duck egg. How much in dollars does she make every day at the farmers' market?\nA:<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n"
+    },
+    "hellaswag": {
+      "primary": 0.47161919936267677,
+      "primary_stderr": 0.004981736689518956,
+      "raw_acc": 0.37661820354511055,
+      "raw_acc_stderr": 0.004835475957611228,
+      "primary_metric": "acc_norm",
+      "n": 10042
+    },
+    "boolq": {
+      "primary": 0.7116207951070337,
+      "primary_stderr": 0.007923167277794917,
+      "raw_acc": 0.7116207951070337,
+      "raw_acc_stderr": 0.007923167277794917,
+      "primary_metric": "acc",
+      "n": 3270
+    },
+    "arc_easy": {
+      "primary": 0.6338383838383839,
+      "primary_stderr": 0.009885391390947702,
+      "raw_acc": 0.6603535353535354,
+      "raw_acc_stderr": 0.009717845628687407,
+      "primary_metric": "acc_norm",
+      "n": 2376
+    }
+  },
+  "delta_vs_baseline_pp": {
+    "gsm8k": 19.332827899924187,
+    "hellaswag": -0.14937263493328135,
+    "boolq": 6.8195718654434305,
+    "arc_easy": 7.491582491582493
+  }
+}
