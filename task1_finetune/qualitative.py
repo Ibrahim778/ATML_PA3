@@ -25,27 +25,30 @@ FORMATS = ("plain", "json", "template")
 
 
 def load_questions(path):
-    """Return [(question_index, format, prompt)] in file order. Accepts either
-    a list of {plain:..., json:..., template:...} entries (optionally under `questions`), or a
-    flat list of {id/question_id, format, prompt/text} entries."""
+    """Return [(question_index, format, prompt, system)] in file order.
+
+    Course file (first_plot_questions.yaml): a list of 24 entries with `id`, `paraphrases` and,
+    for the JSON variants, a `system` prompt. The format comes from the id suffix (`_json`,
+    `_template`, none = plain); question_index is the position of the base question in the
+    plain-question order. Only the first paraphrase is used (one greedy response per prompt).
+    """
     with open(repo_path(path)) as f:
         data = yaml.safe_load(f)
     if isinstance(data, dict):
         data = data.get("questions") or data.get("prompts") or next(v for v in data.values() if isinstance(v, list))
-    out = []
-    if all(isinstance(e, dict) and any(fm in e for fm in FORMATS) for e in data):
-        for qi, e in enumerate(data):
-            src = e.get("formats", e)
-            for fm in FORMATS:
-                out.append((qi, fm, src[fm]))
-    else:
-        order = []
-        for e in data:
-            qid = e.get("id", e.get("question_id"))
-            if qid not in order:
-                order.append(qid)
-            out.append((order.index(qid), str(e["format"]).lower(), e.get("prompt", e.get("text"))))
+    order, out = [], []
+    for e in data:
+        qid = str(e["id"])
+        fm, base = "plain", qid
+        for suffix in ("json", "template"):
+            if qid.endswith("_" + suffix):
+                fm, base = suffix, qid[: -len(suffix) - 1]
+        if base not in order:
+            order.append(base)
+        prompt = e["paraphrases"][0] if "paraphrases" in e else e.get("prompt", e.get("text"))
+        out.append((order.index(base), fm, prompt, e.get("system")))
     assert len(out) == 24, f"expected 24 prompts, found {len(out)}"
+    assert sorted(fm for _, fm, _, _ in out) == sorted(FORMATS * 8), "expected 8 questions x 3 formats"
     return out
 
 
@@ -87,22 +90,22 @@ def main():
     done = {(r["condition"], r["question"], r["format"]) for r in read_jsonl(out_path)}
     from transformers import AutoModelForCausalLM, AutoTokenizer
     for cond in cfg["conditions"]:
-        if all((cond, qi, fm) in done for qi, fm, _ in prompts):
+        if all((cond, qi, fm) in done for qi, fm, _, _ in prompts):
             continue
         path = condition_model_path(cfg, cond)
         tok = AutoTokenizer.from_pretrained(path)
         model = AutoModelForCausalLM.from_pretrained(path, dtype=torch.float16).to(device).eval()
         rows = []
-        for qi, fm, p in tqdm(prompts, desc=cond):
+        for qi, fm, p, system in tqdm(prompts, desc=cond):
             if (cond, qi, fm) in done:
                 continue
-            text = render_prompt(tok, p, enable_thinking=False)
+            text = render_prompt(tok, p, system=system, enable_thinking=False)
             enc = tok(text, return_tensors="pt", add_special_tokens=False).to(device)
             out = model.generate(**enc, do_sample=False, max_new_tokens=qc["max_new_tokens"],
                                  pad_token_id=tok.pad_token_id or tok.eos_token_id)
             gen = out[0, enc["input_ids"].shape[1]:].tolist()
             ended = len(gen) > 0 and gen[-1] in (tok.eos_token_id, tok.convert_tokens_to_ids("<|im_end|>"))
-            rows.append({"condition": cond, "question": qi, "format": fm, "prompt": p,
+            rows.append({"condition": cond, "question": qi, "format": fm, "system": system, "prompt": p,
                          "response": tok.decode(gen, skip_special_tokens=True),
                          "n_tokens": len(gen), "truncated": (not ended) and len(gen) >= qc["max_new_tokens"]})
         write_jsonl(rows, out_path, append=True)
@@ -114,7 +117,7 @@ def main():
 
 def build_annotation_sheet(cfg, prompts, rd):
     rows = read_jsonl(rd / "qualitative_responses.jsonl")
-    qs = sorted({qi for qi, _, _ in prompts})
+    qs = sorted({qi for qi, _, _, _ in prompts})
     chosen = {qs[0], qs[-1]}
     cond_order = list(cfg["conditions"])
     sheet = [r for r in rows if r["question"] in chosen]
