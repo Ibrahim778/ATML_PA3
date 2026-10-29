@@ -75,11 +75,11 @@ def pair_table(rows, n_pairs):
             "ref_nll": nll, "gen_time_per_answer_s": t}
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/task2_vlm.yaml")
     ap.add_argument("--checkpoint", default=None)
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     cfg = load_yaml(args.config)
     fe = cfg["final_eval"]
     set_seed(cfg["seed"])

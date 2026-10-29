@@ -125,10 +125,10 @@ def select_setting(stats_dev, family, cfg):
     return best, base, table
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/task3_ttc.yaml")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     cfg = load_yaml(args.config)
     rd = results_dir(cfg)
     a = cfg["adaptive"]

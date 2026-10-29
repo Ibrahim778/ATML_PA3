@@ -11,11 +11,11 @@ import argparse
 from common.io import load_yaml, read_jsonl, results_dir, write_jsonl
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/task2_vlm.yaml")
     ap.add_argument("--per-type", type=int, default=2)
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     cfg = load_yaml(args.config)
     rd = results_dir(cfg)
     rows = read_jsonl(rd / f"{cfg['run_name']}_final_per_example.jsonl")

@@ -46,6 +46,17 @@ def tokenized_dataset(cfg, tok):
     return out
 
 
+def build_token_cache(config_path="configs/task1_ft.yaml"):
+    """Download the model and create the tokenised-data cache once, before several methods train
+    in parallel (parallel first downloads of the same files can corrupt a shared cache)."""
+    from huggingface_hub import snapshot_download
+    from transformers import AutoTokenizer
+    cfg = load_yaml(config_path)
+    snapshot_download(cfg["model_id"], revision=cfg["model_revision"])
+    tok = AutoTokenizer.from_pretrained(cfg["model_id"], revision=cfg["model_revision"])
+    return len(tokenized_dataset(cfg, tok))
+
+
 def load_model(cfg, mcfg, device):
     from transformers import AutoModelForCausalLM
     full = mcfg["kind"] == "full"
@@ -113,13 +124,13 @@ def displacement(model, ref_sd):
     return sq ** 0.5
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/task1_ft.yaml")
     ap.add_argument("--method", required=True, choices=["full", "l2sp", "lora4", "lora16", "oplora16"])
     ap.add_argument("--max-updates", type=int, default=None, help="stop early (runtime estimate)")
     ap.add_argument("--fresh", action="store_true", help="discard existing checkpoints/outputs of this run and start over")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     cfg = load_yaml(args.config)
     tc, mcfg = cfg["train"], cfg["methods"][args.method]
     device = get_device(cfg["device"])

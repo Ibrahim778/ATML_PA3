@@ -61,12 +61,12 @@ class FeatureStore:
 
 
 @torch.no_grad()
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/task2_vlm.yaml")
     ap.add_argument("--batch-size", type=int, default=64)
     ap.add_argument("--fresh", action="store_true", help="discard existing checkpoints/outputs of this run and start over")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     cfg = load_yaml(args.config)
     device = get_device(cfg["device"])
     out = repo_path(cfg["data"]["feature_cache"])

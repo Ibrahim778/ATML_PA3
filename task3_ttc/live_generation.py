@@ -68,12 +68,12 @@ def sc_pick(answers):
     return None if pick == A.NO_ANSWER else pick   # missing-answer group won: no answer (not "extracted")
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/task3_ttc.yaml")
     ap.add_argument("--limit", type=int, default=None, help="debug: only the first k questions")
     ap.add_argument("--fresh", action="store_true", help="discard existing checkpoints/outputs of this run and start over")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     cfg = load_yaml(args.config)
     lc = cfg["live"]
     rd = results_dir(cfg)

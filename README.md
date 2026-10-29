@@ -101,14 +101,19 @@ python -m task3_ttc.live_generation --config configs/task3_ttc.yaml     # GPU; r
 ```
 
 ### Running on Modal
-`modal_app.py` runs any task on a Modal GPU, with `outputs/`, `results/`, `ids/`, `data/` and the
-Hugging Face cache on a persistent Modal Volume, so skip/resume works across calls:
+`modal_app.py` runs each task natively on Modal. Every step of `scripts/pipeline.py` (the Python
+version of `run_taskN.sh`) is its own Modal function call that calls the task's `main(argv)`
+directly; independent steps run in parallel (the five Task 1 trainings, the seven evaluations).
+A small non-preemptible orchestrator walks the stages and skips finished steps. State
+(`outputs/`, `results/`, `ids/`, `data/`, HF cache) lives on the v2 Volume `atml-pa3-v2`; GPU
+steps retry automatically after preemption or a crash and resume from their checkpoints.
 ```bash
 pip install modal && modal setup
-modal run --detach modal_app.py --task 1            # --force to start over, --gpu A100-80GB etc.
-modal volume get atml-pa3 ATML_PA3/results results  # fetch results
+modal volume put atml-pa3-v2 data/first_plot_questions.yaml data/first_plot_questions.yaml
+modal run --detach modal_app.py --task 1            # --force to start over, --gpu H100 etc.
+modal volume get atml-pa3-v2 results results         # fetch results
 ```
-Upload inputs with `modal volume put atml-pa3 <local> ATML_PA3/data/<path>`.
+Without Modal, `python -m scripts.pipeline --task N [--force]` runs the same steps in one process.
 
 ### Re-running and starting over
 The `run_task*.sh` scripts skip every step whose output already exists, and unfinished training resumes

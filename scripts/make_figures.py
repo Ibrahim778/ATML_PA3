@@ -161,11 +161,11 @@ def task3(plt, res, out, cfg):
         fig.tight_layout(); save(fig, out, f"t3_{ds}_accuracy_coverage_cost"); plt.close(fig)
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="report/figures")
     ap.add_argument("--results", default="results")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     plt = setup()
     out, rr = repo_path(args.out), repo_path(args.results)
     task1(plt, rr / "task1", out)

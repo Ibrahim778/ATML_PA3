@@ -107,13 +107,22 @@ def run_likelihood(lm, cfg, task, spec):
     return agg, rows
 
 
-def main():
+def warm_datasets(config_path="configs/task1_ft.yaml"):
+    """Download every benchmark dataset once (lm-eval task definitions), so evaluations of
+    several conditions can run in parallel without racing on the shared cache."""
+    from lm_eval.tasks import TaskManager, get_task_dict
+    cfg = load_yaml(config_path)
+    names = [cfg["eval"]["gsm8k"]["task"]] + list(cfg["eval"]["likelihood_tasks"])
+    return list(get_task_dict(names, TaskManager()))
+
+
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/task1_ft.yaml")
     ap.add_argument("--condition", required=True)
     ap.add_argument("--tasks", nargs="*", default=None, help="subset of gsm8k hellaswag boolq arc_easy")
     ap.add_argument("--fresh", action="store_true", help="discard existing checkpoints/outputs of this run and start over")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     cfg = load_yaml(args.config)
     set_seed(cfg["seed"])
     device = get_device(cfg["device"])

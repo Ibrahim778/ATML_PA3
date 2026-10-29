@@ -117,11 +117,11 @@ def summarise(df, cov, cfg, is_vlm):
     return out
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/task3_ttc.yaml")
     ap.add_argument("--datasets", nargs="*", default=None)
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     cfg = load_yaml(args.config)
     rd = results_dir(cfg)
     for name in args.datasets or cfg["data"]["datasets"]:

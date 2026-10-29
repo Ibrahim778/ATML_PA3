@@ -168,10 +168,10 @@ def mismatch_map(rng, n_pairs):
             return perm.tolist()
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/task2_vlm.yaml")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     cfg = load_yaml(args.config)
     d, caps, ids = cfg["data"], cfg["caps"], cfg["data"]["ids"]
     rng = np.random.default_rng(cfg["seed"])

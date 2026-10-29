@@ -13,11 +13,11 @@ from task3_ttc.data import (build_questions, check_alignment, load_joined, make_
                             make_splits, orders_path, save_questions)
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/task3_ttc.yaml")
     ap.add_argument("--inspect", action="store_true", help="print schemas and exit")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     cfg = load_yaml(args.config)
     seed = cfg["seed"]
     splits, report = {}, {"scorer": A.scorer_versions()}

@@ -36,11 +36,11 @@ def logits_for(model, tok, prompts):
     return model(**enc).logits.float(), enc["attention_mask"].bool()
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/task1_ft.yaml")
     ap.add_argument("--conditions", nargs="*", default=None)
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     cfg = load_yaml(args.config)
     from transformers import AutoTokenizer
     tok = AutoTokenizer.from_pretrained(cfg["model_id"], revision=cfg["model_revision"])

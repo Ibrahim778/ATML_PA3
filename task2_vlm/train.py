@@ -94,12 +94,12 @@ def eval_points(cfg):
     return sorted(p for p in pts if p <= total)
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/task2_vlm.yaml")
     ap.add_argument("--max-updates", type=int, default=None, help="stop early (runtime estimate)")
     ap.add_argument("--fresh", action="store_true", help="discard existing checkpoints/outputs of this run and start over")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     cfg = load_yaml(args.config)
     tc = cfg["train"]
     device = get_device(cfg["device"])

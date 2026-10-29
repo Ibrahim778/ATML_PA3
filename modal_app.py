@@ -1,107 +1,131 @@
-"""Run the PA3 pipelines on Modal (https://modal.com).
+"""Run the PA3 pipelines natively on Modal (https://modal.com).
 
-The job runs on the container's local disk; everything that must survive between runs
-(outputs/, results/, ids/, logs/) is synced to a persistent Modal Volume every few minutes and
-when the job ends, so the run scripts' skip/resume logic works across calls and after a
-preemption (Modal restarts a preempted GPU function on the same input). data/ and the Hugging
-Face cache are read straight from the Volume.
+Structure (following Modal's long-training example):
+  * every pipeline step (scripts/pipeline.py) runs as its own Modal function call that imports
+    the task module and calls its main(argv) directly: `gpu_step` on a GPU, `cpu_step` on CPU;
+  * steps in the same stage run in parallel (e.g. the five Task 1 trainings, the seven evals);
+  * `orchestrate` (CPU, non-preemptible) walks the stages, skips finished steps and waits for
+    each stage before starting the next; the local entrypoint only spawns it, so `--detach`
+    keeps the whole pipeline alive after the terminal closes;
+  * all state (outputs/, results/, ids/, data/, Hugging Face cache) lives on a v2 Volume;
+    step functions retry automatically after preemption or a crash and resume from the
+    checkpoints on the Volume (the training scripts checkpoint and resume on their own).
 
-    pip install modal && modal setup                      # once
-    modal run --detach modal_app.py --task 1              # Task 1 (add --force to start over)
+    pip install modal && modal setup                                   # once
+    modal volume put atml-pa3-v2 data/first_plot_questions.yaml data/first_plot_questions.yaml
+    modal run --detach modal_app.py --task 1                           # --force to start over
     modal run --detach modal_app.py --task 2 --gpu H100
-    modal volume get atml-pa3 ATML_PA3/results results    # copy results back
-    modal volume put atml-pa3 data/first_plot_questions.yaml ATML_PA3/data/first_plot_questions.yaml
+    modal volume get atml-pa3-v2 results results                       # fetch results
 
-`--detach` keeps the run going after your terminal closes; follow it on the Modal dashboard
-or with `modal app logs atml-pa3`. Start one run at a time: two runs would sync over each other.
+Follow progress on the Modal dashboard (one row per step) or `modal app logs atml-pa3`.
 """
+import os
+
 import modal
 
 APP = "atml-pa3"
-VOL_PATH = "/vol"
-VOL_WORK = f"{VOL_PATH}/ATML_PA3"
-LOCAL = "/root/work"
-SRC = "/root/src"
-SYNCED = ("outputs", "results", "ids", "logs")   # copied local <-> volume
-SYNC_EVERY_S = 300
+VOL = "/vol"
+REPO = "/root/ATML_PA3"
+SEED = "/root/seed"                              # committed ids/ and results/ from the repo
+STATE = ("outputs", "results", "ids", "data")    # live on the volume, symlinked into the repo
+DEFAULT_GPU = "A100-80GB"
 
 image = (
     modal.Image.debian_slim(python_version="3.12")
-    .apt_install("git", "rsync")
     .pip_install_from_requirements("requirements.txt")
-    .add_local_dir(".", SRC, ignore=["data", "outputs", ".git", ".venv", "venv", "logs", "**/__pycache__"])
+    .env({"HF_HOME": f"{VOL}/hf", "PYTHONUNBUFFERED": "1", "TOKENIZERS_PARALLELISM": "false"})
+    .add_local_dir(".", REPO, ignore=["data", "outputs", "results", "ids", "logs", ".git", ".venv",
+                                      "venv", "**/__pycache__", "*.html"])
+    .add_local_dir("ids", f"{SEED}/ids")
+    .add_local_dir("results", f"{SEED}/results")
 )
-vol = modal.Volume.from_name(APP, create_if_missing=True)
+vol = modal.Volume.from_name("atml-pa3-v2", create_if_missing=True, version=2)
 app = modal.App(APP, image=image)
 
-
-def _rsync(src, dst, *flags):
-    import subprocess
-    subprocess.run(["rsync", "-a", *flags, src, dst], check=True)
+# Restart immediately after preemption or a crash; the steps resume from their checkpoints.
+RETRIES = modal.Retries(initial_delay=0.0, max_retries=5)
 
 
-def _push(vol):
-    """Mirror the local working state to the volume and commit it."""
-    import os
-    for d in SYNCED:
-        if os.path.isdir(f"{LOCAL}/{d}"):
-            os.makedirs(f"{VOL_WORK}/{d}", exist_ok=True)
-            _rsync(f"{LOCAL}/{d}/", f"{VOL_WORK}/{d}/", "--delete", "--exclude", "*.tmp")
-    vol.commit()
+def _setup():
+    """Point the repo's state folders at the volume; seed ids/results from the repo once."""
+    import shutil
+    import sys
+    for d in STATE:
+        target = f"{VOL}/{d}"
+        os.makedirs(target, exist_ok=True)
+        if os.path.isdir(f"{SEED}/{d}"):
+            for root, _, files in os.walk(f"{SEED}/{d}"):
+                for f in files:
+                    src = os.path.join(root, f)
+                    dst = os.path.join(target, os.path.relpath(src, f"{SEED}/{d}"))
+                    if not os.path.exists(dst):
+                        os.makedirs(os.path.dirname(dst), exist_ok=True)
+                        shutil.copy2(src, dst)
+        link = f"{REPO}/{d}"
+        if not os.path.islink(link):
+            shutil.rmtree(link, ignore_errors=True)
+            os.symlink(target, link)
+    os.chdir(REPO)
+    if REPO not in sys.path:
+        sys.path.insert(0, REPO)
 
 
-# Explicit CPU/RAM reservation: Full FT keeps an FP32 copy of the starting weights on the host and
-# merge/diagnostics load FP32 models, so the small default request is not enough.
-@app.function(gpu="A100-80GB", cpu=8, memory=32768, timeout=24 * 3600, volumes={VOL_PATH: vol})
-def run(task: int = 1, force: bool = False):
-    import os
-    import subprocess
-    import threading
-
-    # 1. code from the image; persistent state from the volume (seeded from the repo if absent)
-    _rsync(f"{SRC}/", f"{LOCAL}/")
-    for d in SYNCED:
-        os.makedirs(f"{LOCAL}/{d}", exist_ok=True)
-        if os.path.isdir(f"{VOL_WORK}/{d}"):
-            _rsync(f"{VOL_WORK}/{d}/", f"{LOCAL}/{d}/")
-    os.makedirs(f"{VOL_WORK}/data", exist_ok=True)
-    if not os.path.islink(f"{LOCAL}/data"):
-        subprocess.run(["rm", "-rf", f"{LOCAL}/data"], check=True)
-        os.symlink(f"{VOL_WORK}/data", f"{LOCAL}/data")
-
-    # 2. periodic sync so checkpoints survive a preemption or crash
-    stop = threading.Event()
-
-    def syncer():
-        while not stop.wait(SYNC_EVERY_S):
-            try:
-                _push(vol)
-            except Exception as e:   # a failed sync must not kill training
-                print(f"[sync] {e}", flush=True)
-
-    t = threading.Thread(target=syncer, daemon=True)
-    t.start()
-
-    env = dict(os.environ, HF_HOME=f"{VOL_PATH}/hf", PYTHONUNBUFFERED="1")
-    if force:
-        # A preempted call is restarted on the same input; only the first attempt may wipe
-        # progress, later attempts must resume from the synced checkpoints.
-        marker = f"{VOL_PATH}/.force_{modal.current_function_call_id()}"   # outside the synced dirs
+def _run_step(module, argv):
+    _setup()
+    # A retried call (preemption/crash) must resume, not wipe its own progress again.
+    if "--fresh" in argv:
+        marker = f"{VOL}/.fresh_{modal.current_function_call_id()}"
         if os.path.exists(marker):
-            print("[modal] restarted after preemption: resuming instead of --force", flush=True)
+            argv = [a for a in argv if a != "--fresh"]
+            print("[modal] retry of a --fresh step: resuming instead", flush=True)
         else:
             open(marker, "w").close()
             vol.commit()
-            env["FORCE"] = "1"
-    cmd = f"./run_task{task}.sh 2>&1 | tee -a logs/task{task}.log; exit ${{PIPESTATUS[0]}}"
+    from scripts.pipeline import call
     try:
-        subprocess.run(["bash", "-c", cmd], cwd=LOCAL, env=env, check=True)
+        call(module, argv)
     finally:
-        stop.set()
-        t.join()
-        _push(vol)
+        vol.commit()
+
+
+@app.function(gpu=DEFAULT_GPU, cpu=8, memory=32768, timeout=24 * 3600, volumes={VOL: vol},
+              retries=RETRIES, single_use_containers=True)
+def gpu_step(module: str, argv: list):
+    _run_step(module, argv)
+
+
+@app.function(cpu=8, memory=32768, timeout=24 * 3600, volumes={VOL: vol}, retries=RETRIES,
+              single_use_containers=True)
+def cpu_step(module: str, argv: list):
+    _run_step(module, argv)
+
+
+@app.function(cpu=1, memory=2048, timeout=24 * 3600, volumes={VOL: vol}, nonpreemptible=True)
+def orchestrate(task: int, force: bool = False, gpu: str = DEFAULT_GPU, config2: str = "configs/task2_vlm.yaml"):
+    _setup()
+    from scripts.pipeline import pending
+    g = gpu_step.with_options(gpu=gpu)
+    for i, todo in pending(task, force, config2):
+        calls = []
+        for s in todo:
+            print(f"[stage {i}] start {s.name}: {s.module} {' '.join(s.args(force))}", flush=True)
+            calls.append((s, (g if s.gpu else cpu_step).spawn(s.module, s.args(force))))
+        failed = []
+        for s, fc in calls:
+            try:
+                fc.get()
+                print(f"[stage {i}] done  {s.name}", flush=True)
+            except Exception as e:
+                print(f"[stage {i}] FAILED {s.name}: {e!r}", flush=True)
+                failed.append(s.name)
+        vol.reload()   # see what the step containers committed before checking the next stage
+        if failed:
+            raise RuntimeError(f"stage {i} failed: {failed}; rerun the same command to resume")
+    print(f"task {task}: all steps finished", flush=True)
 
 
 @app.local_entrypoint()
-def main(task: int = 1, force: bool = False, gpu: str = "A100-80GB"):
-    run.with_options(gpu=gpu).remote(task=task, force=force)
+def main(task: int = 1, force: bool = False, gpu: str = DEFAULT_GPU, config2: str = "configs/task2_vlm.yaml"):
+    # spawn + get (as in Modal's long-training example): with --detach the orchestrator, and
+    # through it every step, keeps running after this client exits.
+    orchestrate.spawn(task, force, gpu, config2).get()

@@ -86,11 +86,11 @@ def dev_metrics(vlm, dev_caps, suites, store, bs, autocast):
     return out
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/task2_vlm.yaml")
     ap.add_argument("--checkpoint", default=None, help="stage weights dir (default: final stage)")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     from common.io import load_yaml, save_json, results_dir
     from task2_vlm.train import build_model, load_stage_weights, final_stage_dir
     from task2_vlm.cache_features import FeatureStore

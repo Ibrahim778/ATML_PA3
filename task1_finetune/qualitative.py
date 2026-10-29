@@ -73,11 +73,11 @@ def math_markers(text):
 
 
 @torch.no_grad()
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/task1_ft.yaml")
     ap.add_argument("--fresh", action="store_true", help="discard existing checkpoints/outputs of this run and start over")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     cfg = load_yaml(args.config)
     qc = cfg["qualitative"]
     set_seed(cfg["seed"])

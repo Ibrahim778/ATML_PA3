@@ -24,10 +24,10 @@ def normalise(text: str) -> str:
     return re.sub(r"\s+", " ", t).strip()
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/task1_ft.yaml")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     cfg = load_yaml(args.config)
     d = cfg["data"]
     from datasets import load_dataset
