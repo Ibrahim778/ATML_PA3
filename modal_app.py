@@ -3,7 +3,8 @@
 Structure (following Modal's long-training example):
   * every pipeline step (scripts/pipeline.py) runs as its own Modal function call that imports
     the task module and calls its main(argv) directly: `gpu_step` on a GPU, `cpu_step` on CPU;
-  * steps in the same stage run in parallel (e.g. the five Task 1 trainings, the seven evals);
+  * default: the whole task runs step after step in ONE GPU container (`run_task`);
+    with --parallel, steps in the same stage run on separate GPUs (e.g. the five trainings);
   * `orchestrate` (CPU, non-preemptible) walks the stages, skips finished steps and waits for
     each stage before starting the next; the local entrypoint only spawns it, so `--detach`
     keeps the whole pipeline alive after the terminal closes;
@@ -125,8 +126,40 @@ def orchestrate(task: int, force: bool = False, gpu: str = DEFAULT_GPU, config2:
     print(f"task {task}: all steps finished", flush=True)
 
 
+# Default mode: the whole task, step after step, in ONE GPU container (one GPU billed at a time).
+# CPU steps (data prep, merges) simply run in the same container.
+@app.function(gpu=DEFAULT_GPU, cpu=16, memory=32768, timeout=24 * 3600, volumes={VOL: vol},
+              retries=RETRIES, single_use_containers=True)
+def run_task(task: int, force: bool = False, config2: str = "configs/task2_vlm.yaml"):
+    _setup()
+    # A retry after preemption/crash resumes: finished steps are skipped, training resumes from
+    # its checkpoint. Only the first attempt of a --force run wipes earlier progress.
+    if force:
+        marker = f"{VOL}/.force_{modal.current_function_call_id()}"
+        if os.path.exists(marker):
+            force = False
+            print("[modal] retry of a --force run: resuming instead", flush=True)
+        else:
+            open(marker, "w").close()
+            vol.commit()
+    from scripts.pipeline import call, pending
+    for i, todo in pending(task, force, config2):
+        for s in todo:
+            print(f"[stage {i}] {s.name}: {s.module} {' '.join(s.args(force))}", flush=True)
+            try:
+                call(s.module, s.args(force))
+            finally:
+                vol.commit()
+    print(f"task {task}: all steps finished", flush=True)
+
+
 @app.local_entrypoint()
-def main(task: int = 1, force: bool = False, gpu: str = DEFAULT_GPU, config2: str = "configs/task2_vlm.yaml"):
-    # spawn + get (as in Modal's long-training example): with --detach the orchestrator, and
-    # through it every step, keeps running after this client exits.
-    orchestrate.spawn(task, force, gpu, config2).get()
+def main(task: int = 1, force: bool = False, gpu: str = DEFAULT_GPU, config2: str = "configs/task2_vlm.yaml",
+         parallel: bool = False):
+    # spawn + get (as in Modal's long-training example): with --detach the job keeps running
+    # after this client exits. --parallel uses one GPU per independent step (same GPU-hours,
+    # shorter wall-clock, several GPUs billed at once).
+    if parallel:
+        orchestrate.spawn(task, force, gpu, config2).get()
+    else:
+        run_task.with_options(gpu=gpu).spawn(task, force, config2).get()
