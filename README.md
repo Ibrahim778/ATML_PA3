@@ -101,12 +101,11 @@ python -m task3_ttc.live_generation --config configs/task3_ttc.yaml     # GPU; r
 ```
 
 ### Running on Modal
-`modal_app.py` runs each task natively on Modal. Every step of `scripts/pipeline.py` (the Python
-version of `run_taskN.sh`) is its own Modal function call that calls the task's `main(argv)`
-directly; independent steps run in parallel (the five Task 1 trainings, the seven evaluations).
-A small non-preemptible orchestrator walks the stages and skips finished steps. State
-(`outputs/`, `results/`, `ids/`, `data/`, HF cache) lives on the v2 Volume `atml-pa3-v2`; GPU
-steps retry automatically after preemption or a crash and resume from their checkpoints.
+`modal_app.py` runs each task on one Modal GPU: a single function call runs the steps of
+`scripts/pipeline.py` (the Python version of `run_taskN.sh`) in order, calling each task's
+`main(argv)` directly and skipping finished steps. State (`outputs/`, `results/`, `ids/`,
+`data/`, HF cache) lives on the v2 Volume `atml-pa3-v2`; after preemption or a crash Modal
+retries the call and it resumes from the last finished step or checkpoint.
 ```bash
 pip install modal && modal setup
 modal volume put atml-pa3-v2 data/first_plot_questions.yaml data/first_plot_questions.yaml

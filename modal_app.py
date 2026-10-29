@@ -1,16 +1,13 @@
 """Run the PA3 pipelines natively on Modal (https://modal.com).
 
 Structure (following Modal's long-training example):
-  * every pipeline step (scripts/pipeline.py) runs as its own Modal function call that imports
-    the task module and calls its main(argv) directly: `gpu_step` on a GPU, `cpu_step` on CPU;
-  * default: the whole task runs step after step in ONE GPU container (`run_task`);
-    with --parallel, steps in the same stage run on separate GPUs (e.g. the five trainings);
-  * `orchestrate` (CPU, non-preemptible) walks the stages, skips finished steps and waits for
-    each stage before starting the next; the local entrypoint only spawns it, so `--detach`
-    keeps the whole pipeline alive after the terminal closes;
+  * `run_task` runs one task's steps (scripts/pipeline.py) in order inside ONE GPU container,
+    calling each task module's main(argv) directly; CPU-only steps run in the same container;
   * all state (outputs/, results/, ids/, data/, Hugging Face cache) lives on a v2 Volume;
-    step functions retry automatically after preemption or a crash and resume from the
-    checkpoints on the Volume (the training scripts checkpoint and resume on their own).
+    the function retries automatically after preemption or a crash and resumes: finished steps
+    are skipped and training restarts from its last checkpoint on the Volume;
+  * the local entrypoint uses spawn().get(), so `--detach` keeps the job alive after the
+    terminal closes.
 
     pip install modal && modal setup                                   # once
     modal volume put atml-pa3-v2 data/first_plot_questions.yaml data/first_plot_questions.yaml
@@ -18,7 +15,7 @@ Structure (following Modal's long-training example):
     modal run --detach modal_app.py --task 2 --gpu H100
     modal volume get atml-pa3-v2 results results                       # fetch results
 
-Follow progress on the Modal dashboard (one row per step) or `modal app logs atml-pa3`.
+Follow progress on the Modal dashboard or with `modal app logs atml-pa3`.
 """
 import os
 
@@ -71,63 +68,7 @@ def _setup():
         sys.path.insert(0, REPO)
 
 
-def _run_step(module, argv):
-    _setup()
-    # A retried call (preemption/crash) must resume, not wipe its own progress again.
-    if "--fresh" in argv:
-        marker = f"{VOL}/.fresh_{modal.current_function_call_id()}"
-        if os.path.exists(marker):
-            argv = [a for a in argv if a != "--fresh"]
-            print("[modal] retry of a --fresh step: resuming instead", flush=True)
-        else:
-            open(marker, "w").close()
-            vol.commit()
-    from scripts.pipeline import call
-    try:
-        call(module, argv)
-    finally:
-        vol.commit()
-
-
-@app.function(gpu=DEFAULT_GPU, cpu=4, memory=16384, timeout=24 * 3600, volumes={VOL: vol},
-              retries=RETRIES, single_use_containers=True)
-def gpu_step(module: str, argv: list):
-    _run_step(module, argv)
-
-
-@app.function(cpu=4, memory=16384, timeout=24 * 3600, volumes={VOL: vol}, retries=RETRIES,
-              single_use_containers=True)
-def cpu_step(module: str, argv: list):
-    _run_step(module, argv)
-
-
-# Only waits on other calls: tiny reservation keeps the 3x non-preemptible rate negligible.
-@app.function(cpu=0.25, memory=1024, timeout=24 * 3600, volumes={VOL: vol}, nonpreemptible=True)
-def orchestrate(task: int, force: bool = False, gpu: str = DEFAULT_GPU, config2: str = "configs/task2_vlm.yaml"):
-    _setup()
-    from scripts.pipeline import pending
-    g = gpu_step.with_options(gpu=gpu)
-    for i, todo in pending(task, force, config2):
-        calls = []
-        for s in todo:
-            print(f"[stage {i}] start {s.name}: {s.module} {' '.join(s.args(force))}", flush=True)
-            calls.append((s, (g if s.gpu else cpu_step).spawn(s.module, s.args(force))))
-        failed = []
-        for s, fc in calls:
-            try:
-                fc.get()
-                print(f"[stage {i}] done  {s.name}", flush=True)
-            except Exception as e:
-                print(f"[stage {i}] FAILED {s.name}: {e!r}", flush=True)
-                failed.append(s.name)
-        vol.reload()   # see what the step containers committed before checking the next stage
-        if failed:
-            raise RuntimeError(f"stage {i} failed: {failed}; rerun the same command to resume")
-    print(f"task {task}: all steps finished", flush=True)
-
-
-# Default mode: the whole task, step after step, in ONE GPU container (one GPU billed at a time).
-# CPU steps (data prep, merges) simply run in the same container.
+# The whole task, step after step, in ONE GPU container (one GPU billed at a time).
 @app.function(gpu=DEFAULT_GPU, cpu=8, memory=32768, timeout=24 * 3600, volumes={VOL: vol},
               retries=RETRIES, single_use_containers=True)
 def run_task(task: int, force: bool = False, config2: str = "configs/task2_vlm.yaml"):
@@ -154,12 +95,7 @@ def run_task(task: int, force: bool = False, config2: str = "configs/task2_vlm.y
 
 
 @app.local_entrypoint()
-def main(task: int = 1, force: bool = False, gpu: str = DEFAULT_GPU, config2: str = "configs/task2_vlm.yaml",
-         parallel: bool = False):
+def main(task: int = 1, force: bool = False, gpu: str = DEFAULT_GPU, config2: str = "configs/task2_vlm.yaml"):
     # spawn + get (as in Modal's long-training example): with --detach the job keeps running
-    # after this client exits. --parallel uses one GPU per independent step (same GPU-hours,
-    # shorter wall-clock, several GPUs billed at once).
-    if parallel:
-        orchestrate.spawn(task, force, gpu, config2).get()
-    else:
-        run_task.with_options(gpu=gpu).spawn(task, force, config2).get()
+    # after this client exits.
+    run_task.with_options(gpu=gpu).spawn(task, force, config2).get()
