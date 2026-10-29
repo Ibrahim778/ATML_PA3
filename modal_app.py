@@ -88,19 +88,20 @@ def _run_step(module, argv):
         vol.commit()
 
 
-@app.function(gpu=DEFAULT_GPU, cpu=8, memory=32768, timeout=24 * 3600, volumes={VOL: vol},
+@app.function(gpu=DEFAULT_GPU, cpu=4, memory=16384, timeout=24 * 3600, volumes={VOL: vol},
               retries=RETRIES, single_use_containers=True)
 def gpu_step(module: str, argv: list):
     _run_step(module, argv)
 
 
-@app.function(cpu=8, memory=32768, timeout=24 * 3600, volumes={VOL: vol}, retries=RETRIES,
+@app.function(cpu=4, memory=16384, timeout=24 * 3600, volumes={VOL: vol}, retries=RETRIES,
               single_use_containers=True)
 def cpu_step(module: str, argv: list):
     _run_step(module, argv)
 
 
-@app.function(cpu=1, memory=2048, timeout=24 * 3600, volumes={VOL: vol}, nonpreemptible=True)
+# Only waits on other calls: tiny reservation keeps the 3x non-preemptible rate negligible.
+@app.function(cpu=0.25, memory=1024, timeout=24 * 3600, volumes={VOL: vol}, nonpreemptible=True)
 def orchestrate(task: int, force: bool = False, gpu: str = DEFAULT_GPU, config2: str = "configs/task2_vlm.yaml"):
     _setup()
     from scripts.pipeline import pending
