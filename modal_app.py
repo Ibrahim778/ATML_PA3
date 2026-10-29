@@ -69,7 +69,7 @@ def _setup():
 
 
 # The whole task, step after step, in ONE GPU container (one GPU billed at a time).
-@app.function(gpu=DEFAULT_GPU, cpu=8, memory=32768, timeout=24 * 3600, volumes={VOL: vol},
+@app.function(gpu="RTX-PRO-6000", cpu=8, memory=32768, timeout=24 * 3600, volumes={VOL: vol},
               retries=RETRIES, single_use_containers=True)
 def run_task(task: int, force: bool = False, config2: str = "configs/task2_vlm.yaml"):
     _setup()
